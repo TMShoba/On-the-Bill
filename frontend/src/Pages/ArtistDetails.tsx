@@ -1,13 +1,27 @@
-import { useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import NavBar from "../components/NavBar";
 import { useArtist } from "../hooks/useArtists";
 import { useAuth } from "../context/AuthContext";
-import { addPromoterBooking } from "../Services/demoStore";
+import {
+  addPromoterBooking,
+  getDemoGigs,
+  DEMO_ARTIST,
+  DEMO_PROMOTER,
+} from "../Services/demoStore";
 import { mockMessagingApi } from "../Services/mockMessagingApi";
-import { DEMO_ARTIST, DEMO_PROMOTER } from "../Services/demoStore";
 import { createBooking } from "../Services/bookingService";
 import { resolveArtistImage } from "../utils/imageCdn";
+import PublicAvailabilityCalendar, {
+  confirmedDatesFromGigs,
+} from "../components/PublicAvailabilityCalendar";
+import {
+  type PaymentMethod,
+  redirectToPayFast,
+  getManualPaymentDetails,
+  type ManualPaymentDetails,
+} from "../Services/payfastService";
+import { getStoredArtistPhoto } from "../components/ArtistPhotoUpload";
 
 export default function ArtistDetails() {
   const { id } = useParams();
@@ -18,12 +32,32 @@ export default function ArtistDetails() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [formError, setFormError] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
+  const [manualDetails, setManualDetails] =
+    useState<ManualPaymentDetails | null>(null);
+
+  const busyDates = useMemo(() => {
+    const gigs = getDemoGigs();
+    return confirmedDatesFromGigs(
+      gigs.filter((g) => g.artistId === DEMO_ARTIST.id)
+    );
+  }, []);
+
+  const profilePhoto = useMemo(() => {
+    if (!artist) return undefined;
+    return (
+      getStoredArtistPhoto(artist.id) ||
+      getStoredArtistPhoto(DEMO_ARTIST.id) ||
+      undefined
+    );
+  }, [artist]);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!artist) return;
     setSubmitting(true);
     setFormError("");
+    setManualDetails(null);
     const form = new FormData(e.currentTarget);
 
     const payload = {
@@ -39,13 +73,15 @@ export default function ArtistDetails() {
     };
 
     try {
-      // Demo flow: store locally + open conversation
+      let bookingId: string = crypto.randomUUID();
+
       if (user?.role === "promoter" || user?.email === DEMO_PROMOTER.email) {
         const gig = addPromoterBooking({
           ...payload,
-          artistId: DEMO_ARTIST.id, // demo calendar uses demo artist id
+          artistId: DEMO_ARTIST.id,
           artistName: artist.stageName,
         });
+        bookingId = gig.id;
 
         await mockMessagingApi.ensureConversationForBooking({
           bookingId: gig.id,
@@ -57,22 +93,37 @@ export default function ArtistDetails() {
             payload.message ||
             `Hi! I'd like to book you for ${payload.venue} on ${payload.eventDate}.`,
         });
-
-        setSuccess(true);
-        setShowForm(false);
       } else {
-        // Real API path
-        await createBooking({
+        const created = await createBooking({
           artistId: artist.id,
           clientName: user?.name || String(form.get("clientName") || ""),
-          clientEmail: user?.email || String(form.get("clientEmail") || ""),
+          clientEmail: user?.email || (form.get("clientEmail") as string),
           eventDate: payload.eventDate,
           venue: payload.venue,
           message: payload.message,
         });
-        setSuccess(true);
-        setShowForm(false);
+        bookingId = created.id;
       }
+
+      if (paymentMethod === "card") {
+        redirectToPayFast({
+          amount: payload.fee,
+          itemName: `Booking: ${artist.stageName} — ${payload.venue}`,
+          itemDescription: `${payload.eventDate} ${payload.time || ""}`.trim(),
+          email: user?.email,
+          nameFirst: user?.name?.split(" ")[0],
+          nameLast: user?.name?.split(" ").slice(1).join(" ") || undefined,
+          customStr1: bookingId,
+          customStr2: artist.id,
+          returnUrl: `${window.location.origin}/dashboard?payment=success&ref=${bookingId}`,
+          cancelUrl: `${window.location.origin}/artists/${artist.id}?payment=cancelled`,
+        });
+        return;
+      }
+
+      setManualDetails(getManualPaymentDetails(payload.fee, bookingId));
+      setSuccess(true);
+      setShowForm(false);
     } catch (err: unknown) {
       const message =
         (err as { response?: { data?: { message?: string } } })?.response
@@ -119,8 +170,18 @@ export default function ArtistDetails() {
               onClick={() => navigate(-1)}
               className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50"
             >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
               Back
             </button>
@@ -146,12 +207,29 @@ export default function ArtistDetails() {
         </div>
 
         <div className="grid items-start gap-10 lg:grid-cols-2">
-          <div className="overflow-hidden rounded-2xl bg-slate-100 shadow-lg">
-            <img
-              src={resolveArtistImage(artist.imageUrl, artist.id, "full")}
-              alt={artist.stageName}
-              className="aspect-[4/3] w-full object-cover"
-            />
+          <div>
+            <div className="overflow-hidden rounded-2xl bg-slate-100 shadow-lg">
+              <img
+                src={
+                  profilePhoto ||
+                  resolveArtistImage(artist.imageUrl, artist.id, "full")
+                }
+                alt={artist.stageName}
+                className="aspect-[4/3] w-full object-cover"
+              />
+            </div>
+
+            {/* Lighter public-facing availability calendar */}
+            <div className="mt-6">
+              <h2 className="mb-2 text-lg font-bold text-slate-900">
+                Availability
+              </h2>
+              <p className="mb-3 text-sm text-slate-500">
+                Open dates promoters can request. Busy days are already
+                confirmed.
+              </p>
+              <PublicAvailabilityCalendar busyDates={busyDates} />
+            </div>
           </div>
 
           <div className="text-left">
@@ -180,20 +258,71 @@ export default function ArtistDetails() {
             )}
 
             {success && (
-              <div className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-                Booking request sent!{" "}
-                {user?.role === "promoter" && (
-                  <>
-                    Switch to the artist account to see it on the calendar and in
-                    Messages.{" "}
-                    <button
-                      type="button"
-                      className="font-semibold underline"
-                      onClick={() => navigate("/dashboard")}
-                    >
-                      Go to dashboard
-                    </button>
-                  </>
+              <div className="mt-6 space-y-4">
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                  Booking request sent!
+                  {user?.role === "promoter" && (
+                    <>
+                      {" "}
+                      Switch to the artist account to see it on the calendar and
+                      in Messages.{" "}
+                      <button
+                        type="button"
+                        className="font-semibold underline"
+                        onClick={() => navigate("/dashboard")}
+                      >
+                        Go to dashboard
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                {manualDetails && (
+                  <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <h3 className="text-base font-bold text-slate-900">
+                      Manual bank transfer (EFT)
+                    </h3>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Use these details to complete payment. Reference must
+                      match so we can allocate funds.
+                    </p>
+                    <dl className="mt-4 space-y-2 text-sm">
+                      <div className="flex justify-between gap-4">
+                        <dt className="text-slate-500">Bank</dt>
+                        <dd className="font-medium">{manualDetails.bankName}</dd>
+                      </div>
+                      <div className="flex justify-between gap-4">
+                        <dt className="text-slate-500">Account name</dt>
+                        <dd className="font-medium">
+                          {manualDetails.accountName}
+                        </dd>
+                      </div>
+                      <div className="flex justify-between gap-4">
+                        <dt className="text-slate-500">Account number</dt>
+                        <dd className="font-mono font-medium">
+                          {manualDetails.accountNumber}
+                        </dd>
+                      </div>
+                      <div className="flex justify-between gap-4">
+                        <dt className="text-slate-500">Branch code</dt>
+                        <dd className="font-mono font-medium">
+                          {manualDetails.branchCode}
+                        </dd>
+                      </div>
+                      <div className="flex justify-between gap-4">
+                        <dt className="text-slate-500">Reference</dt>
+                        <dd className="font-mono font-semibold text-emerald-700">
+                          {manualDetails.reference}
+                        </dd>
+                      </div>
+                      <div className="flex justify-between gap-4 border-t border-slate-100 pt-2">
+                        <dt className="text-slate-500">Amount</dt>
+                        <dd className="text-lg font-bold text-slate-900">
+                          R{manualDetails.amount.toLocaleString()}
+                        </dd>
+                      </div>
+                    </dl>
+                  </div>
                 )}
               </div>
             )}
@@ -209,6 +338,7 @@ export default function ArtistDetails() {
                   }
                   setShowForm(true);
                   setSuccess(false);
+                  setManualDetails(null);
                 }}
               >
                 Request Booking
@@ -293,6 +423,7 @@ export default function ArtistDetails() {
                     name="fee"
                     type="number"
                     defaultValue={artist.rate}
+                    min={5}
                     className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm"
                   />
                 </div>
@@ -309,13 +440,64 @@ export default function ArtistDetails() {
                   />
                 </div>
 
+                {/* Payment method: card (PayFast) or manual EFT */}
+                <fieldset className="rounded-xl border border-slate-200 bg-white p-4">
+                  <legend className="px-1 text-sm font-semibold text-slate-800">
+                    Payment method
+                  </legend>
+                  <div className="mt-2 space-y-2">
+                    <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 has-[:checked]:border-emerald-300 has-[:checked]:bg-emerald-50/50">
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="card"
+                        checked={paymentMethod === "card"}
+                        onChange={() => setPaymentMethod("card")}
+                        className="mt-1"
+                      />
+                      <span>
+                        <span className="block text-sm font-medium text-slate-900">
+                          Card (PayFast)
+                        </span>
+                        <span className="text-xs text-slate-500">
+                          Visa, Mastercard, Instant EFT via PayFast secure
+                          checkout
+                        </span>
+                      </span>
+                    </label>
+                    <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-100 p-3 hover:bg-slate-50 has-[:checked]:border-emerald-300 has-[:checked]:bg-emerald-50/50">
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="manual"
+                        checked={paymentMethod === "manual"}
+                        onChange={() => setPaymentMethod("manual")}
+                        className="mt-1"
+                      />
+                      <span>
+                        <span className="block text-sm font-medium text-slate-900">
+                          Manual bank transfer (EFT)
+                        </span>
+                        <span className="text-xs text-slate-500">
+                          Pay from your bank; booking stays pending until funds
+                          clear
+                        </span>
+                      </span>
+                    </label>
+                  </div>
+                </fieldset>
+
                 <div className="flex gap-3 pt-2">
                   <button
                     type="submit"
                     disabled={submitting}
                     className="rounded-xl bg-slate-900 px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
                   >
-                    {submitting ? "Sending..." : "Send request"}
+                    {submitting
+                      ? "Processing..."
+                      : paymentMethod === "card"
+                        ? "Pay with PayFast"
+                        : "Send request & get bank details"}
                   </button>
                   <button
                     type="button"

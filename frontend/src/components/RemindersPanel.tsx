@@ -33,7 +33,7 @@ export default function RemindersPanel({ gigs, onOpenGig }: Props) {
       }
       if (Notification.permission === "granted") {
         const next = upcoming[0];
-        new Notification("On the Bill — upcoming gig", {
+        new Notification("The LineUp — upcoming gig", {
           body: `${next.venue} in ${next.days === 0 ? "today" : `${next.days} day(s)`}`,
           silent: true,
         });

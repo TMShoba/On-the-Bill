@@ -6,7 +6,7 @@ const GIGS_KEY = "otb_demo_gigs";
 export const DEMO_ARTIST = {
   id: "artist-demo-1",
   name: "DJ Maphorisa",
-  email: "artist@onthebill.co.za",
+  email: "artist@thelineup.co.za",
   role: "artist" as const,
   createdAt: new Date().toISOString(),
 };
@@ -14,7 +14,7 @@ export const DEMO_ARTIST = {
 export const DEMO_PROMOTER = {
   id: "promoter-demo-1",
   name: "Thabo Events",
-  email: "promoter@onthebill.co.za",
+  email: "promoter@thelineup.co.za",
   role: "promoter" as const,
   createdAt: new Date().toISOString(),
 };

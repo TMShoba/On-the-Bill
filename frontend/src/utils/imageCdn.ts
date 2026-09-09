@@ -31,6 +31,11 @@ export const ARTIST_IMAGE_SLUG: Record<string, string> = {
   "18": "nkosazana",
   "19": "blxckie",
   "20": "musa-keys",
+  "21": "areece",
+  "22": "dlala-thukzin",
+  "23": "dbn-gogo",
+  "24": "oscar-mbo",
+  "25": "cassper",
   tyla: "tyla",
   maphorisa: "maphorisa",
   "dj maphorisa": "maphorisa",
@@ -52,6 +57,17 @@ export const ARTIST_IMAGE_SLUG: Record<string, string> = {
   "nkosazana daughter": "nkosazana",
   blxckie: "blxckie",
   "musa keys": "musa-keys",
+  areece: "areece",
+  "a-reece": "areece",
+  "a reece": "areece",
+  "dlala thukzin": "dlala-thukzin",
+  "dlala-thukzin": "dlala-thukzin",
+  "dbn gogo": "dbn-gogo",
+  "dbn-gogo": "dbn-gogo",
+  "oscar mbo": "oscar-mbo",
+  "oscar-mbo": "oscar-mbo",
+  cassper: "cassper",
+  "cassper nyovest": "cassper",
 };
 
 function slugFor(key: string): string {
@@ -59,13 +75,16 @@ function slugFor(key: string): string {
   return ARTIST_IMAGE_SLUG[k] || ARTIST_IMAGE_SLUG[key] || "tyla";
 }
 
-export function artistImage(artistIdOrName: string, size: ImageSize = "card"): string {
+export function artistImage(
+  artistIdOrName: string,
+  size: ImageSize = "card"
+): string {
   const slug = slugFor(artistIdOrName);
   const { w, h } = SIZE_MAP[size];
 
   if (MODE === "cloudinary" && CLOUD) {
     const crop = h ? `c_fill,w_${w},h_${h}` : `c_limit,w_${w}`;
-    return `https://res.cloudinary.com/${CLOUD}/image/upload/f_auto,q_auto,${crop}/onthebill/artists/${slug}`;
+    return `https://res.cloudinary.com/${CLOUD}/image/upload/f_auto,q_auto,${crop}/thelineup/artists/${slug}`;
   }
   if (MODE === "imgix" && IMGIX) {
     const params = h
@@ -83,5 +102,17 @@ export function resolveArtistImage(
   size: ImageSize = "card"
 ): string {
   if (imageUrl?.startsWith("http")) return imageUrl;
+  // Prefer local relative path when it points at a real file under /artists/
+  if (imageUrl?.startsWith("/artists/")) {
+    const base = imageUrl.replace(/\.(jpg|jpeg|png|webp)$/i, "");
+    if (size === "card" || size === "thumb") {
+      return `${base}-card.webp`;
+    }
+    // Prefer webp full if path was jpg
+    if (imageUrl.endsWith(".jpg") || imageUrl.endsWith(".jpeg")) {
+      return `${base}.webp`;
+    }
+    return imageUrl;
+  }
   return artistImage(artistId, size);
 }

@@ -31,7 +31,7 @@ export default function NavBar() {
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-sm font-bold text-white">
             OB
           </span>
-          On the Bill
+          The LineUp
         </Link>
 
         <nav className="hidden items-center gap-1 sm:flex">

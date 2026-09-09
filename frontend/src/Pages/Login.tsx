@@ -62,7 +62,7 @@ export default function Login() {
             >
               <span className="font-semibold">Artist</span>
               <span className="mt-0.5 block text-xs text-slate-500">
-                artist@onthebill.co.za
+                artist@thelineup.co.za
               </span>
             </button>
             <button
@@ -72,7 +72,7 @@ export default function Login() {
             >
               <span className="font-semibold">Promoter</span>
               <span className="mt-0.5 block text-xs text-slate-500">
-                promoter@onthebill.co.za
+                promoter@thelineup.co.za
               </span>
             </button>
           </div>

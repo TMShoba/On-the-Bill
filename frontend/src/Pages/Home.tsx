@@ -9,8 +9,10 @@ const roster = [
   { id: "3", name: "Master KG", tag: "Afro Pop" },
   { id: "14", name: "Uncle Waffles", tag: "Amapiano" },
   { id: "9", name: "Nasty C", tag: "Hip Hop" },
-  { id: "13", name: "Focalistic", tag: "Amapiano" },
-  { id: "15", name: "Makhadzi", tag: "Limpopo Pop" },
+  { id: "21", name: "A-Reece", tag: "Hip Hop" },
+  { id: "23", name: "DBN Gogo", tag: "Amapiano" },
+  { id: "25", name: "Cassper Nyovest", tag: "Hip Hop" },
+  { id: "22", name: "Dlala Thukzin", tag: "Gqom" },
 ];
 
 export default function Home() {
@@ -32,17 +34,17 @@ export default function Home() {
 
         <div className="relative mx-auto max-w-6xl px-4 pb-24 pt-20 sm:px-6 sm:pb-32 sm:pt-28">
           <p className="mb-4 text-xs font-bold uppercase tracking-[0.25em] text-emerald-400">
-            South Africa&apos;s booking platform
+            South Africa&apos;s live-music booking platform
           </p>
           <h1 className="max-w-3xl text-5xl font-black leading-[1.05] tracking-tight sm:text-6xl lg:text-7xl">
-            The artists.
+            Build the night.
             <br />
-            <span className="text-emerald-400">On the bill.</span>
+            <span className="text-emerald-400">Set the lineup.</span>
           </h1>
           <p className="mt-6 max-w-xl text-lg leading-relaxed text-slate-300 sm:text-xl">
-            Stop chasing numbers on WhatsApp. Discover verified talent, send a
-            proper request, and lock the date — from Amapiano headliners to
-            Hip Hop heavyweights.
+            The LineUp connects promoters with verified SA talent — from Amapiano
+            headliners to Hip Hop heavyweights. Discover, request, and confirm
+            without the WhatsApp chaos.
           </p>
 
           <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -62,7 +64,7 @@ export default function Home() {
 
           <div className="mt-14 flex flex-wrap gap-8 border-t border-white/10 pt-8 text-sm">
             <div>
-              <p className="text-3xl font-black text-white">17+</p>
+              <p className="text-3xl font-black text-white">25+</p>
               <p className="text-slate-400">Artists live</p>
             </div>
             <div>
@@ -82,7 +84,7 @@ export default function Home() {
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <div className="mb-6 flex items-end justify-between">
             <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400">
-              Featured on the bill
+              Featured on The LineUp
             </h2>
             <Link
               to="/artists"
@@ -124,7 +126,7 @@ export default function Home() {
             </h2>
             <p className="mt-4 text-slate-400">
               Whether you&apos;re filling a club in Sandton or a festival stage
-              in Durban — On the Bill keeps talent, rates and conversations in
+              in Durban — The LineUp keeps talent, rates and conversations in
               one place.
             </p>
           </div>
@@ -203,7 +205,7 @@ export default function Home() {
       {/* FINAL STRIP */}
       <section className="border-t border-white/10 bg-slate-900 py-16 text-center">
         <h2 className="text-2xl font-black sm:text-3xl">
-          Ready to put someone on the bill?
+          Ready to lock your next lineup?
         </h2>
         <Link
           to="/artists"
@@ -214,7 +216,7 @@ export default function Home() {
       </section>
 
       <footer className="border-t border-white/10 py-8 text-center text-sm text-slate-500">
-        © {new Date().getFullYear()} On the Bill · South Africa
+        © {new Date().getFullYear()} The LineUp · South Africa
       </footer>
     </div>
   );

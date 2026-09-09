@@ -3,10 +3,12 @@ import GigCalendar from "../../components/GigCalendar";
 import GigDetailsModal from "../../components/GigDetailsModal";
 import RemindersPanel from "../../components/RemindersPanel";
 import MessagesPanel from "../../components/Messages/MessagesPanel";
+import ArtistPhotoUpload from "../../components/ArtistPhotoUpload";
 import {
   getDemoGigs,
   toggleReminder,
   updateBookingStatus,
+  DEMO_ARTIST,
 } from "../../Services/demoStore";
 import type { Booking } from "../../Types/Artist";
 import { useAuth } from "../../context/AuthContext";
@@ -20,6 +22,7 @@ export default function ArtistDashboard() {
   const [dayGigs, setDayGigs] = useState<Booking[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [responding, setResponding] = useState(false);
+  const artistId = user?.id || DEMO_ARTIST.id;
 
   const mine = useMemo(
     () => gigs.filter((g) => g.artistId === user?.id || true),
@@ -90,6 +93,11 @@ export default function ArtistDashboard() {
           <p className="text-sm text-slate-500">Declined</p>
           <p className="text-2xl font-bold text-rose-500">{stats.declined}</p>
         </div>
+      </div>
+
+      {/* Profile photo upload for the artist's own dashboard */}
+      <div className="mb-8">
+        <ArtistPhotoUpload artistId={artistId} />
       </div>
 
       {/* Pending booking requests — accept / decline journey */}
