@@ -50,7 +50,7 @@ db.exec(`
       genre: "Gqom",
       location: "Durban",
       rate: 20000,
-      image_url: "/artists/nasty-c.jpg",
+      image_url: "/artists/dlala thukzin.jpg",
       bio: "Durban-based Gqom producer known for high-energy club anthems and collaborations that dominate dance floors nationwide.",
     },
 
