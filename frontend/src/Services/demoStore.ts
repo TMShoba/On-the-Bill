@@ -164,20 +164,22 @@ export function addPromoterBooking(input: {
   time?: string;
   fee?: number;
   message?: string;
+  clientName?: string;
+  clientEmail?: string;
 }): Booking {
   const gig: Booking = {
     id: crypto.randomUUID(),
     artistId: input.artistId,
     artistName: input.artistName,
-    clientName: DEMO_PROMOTER.name,
-    clientEmail: DEMO_PROMOTER.email,
+    clientName: input.clientName || DEMO_PROMOTER.name,
+    clientEmail: input.clientEmail || DEMO_PROMOTER.email,
     eventDate: input.eventDate,
     time: input.time || "20:00",
     venue: input.venue,
     address: input.address || "",
     city: input.city || "",
     fee: input.fee,
-    promoterName: DEMO_PROMOTER.name,
+    promoterName: input.clientName || DEMO_PROMOTER.name,
     notes: input.message || "",
     message: input.message || "Booking request",
     status: "pending",
@@ -186,4 +188,17 @@ export function addPromoterBooking(input: {
   };
   upsertDemoGig(gig);
   return gig;
+}
+
+/** Artist accepts or declines a pending booking request */
+export function updateBookingStatus(
+  gigId: string,
+  status: "confirmed" | "declined"
+): Booking | null {
+  const gigs = getDemoGigs();
+  const idx = gigs.findIndex((g) => g.id === gigId);
+  if (idx < 0) return null;
+  gigs[idx] = { ...gigs[idx], status };
+  writeGigs(gigs);
+  return gigs[idx];
 }

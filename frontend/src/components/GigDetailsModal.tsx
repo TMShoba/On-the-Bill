@@ -6,6 +6,10 @@ type Props = {
   onClose: () => void;
   onToggleReminder?: (gigId: string, value: boolean) => void;
   showReminderToggle?: boolean;
+  /** When true and status is pending, show Accept / Decline actions (artist view) */
+  canRespond?: boolean;
+  onRespond?: (gigId: string, status: "confirmed" | "declined") => void;
+  responding?: boolean;
 };
 
 const statusStyles = {
@@ -20,8 +24,13 @@ export default function GigDetailsModal({
   onClose,
   onToggleReminder,
   showReminderToggle = true,
+  canRespond = false,
+  onRespond,
+  responding = false,
 }: Props) {
   if (!open || !gig) return null;
+
+  const showActions = canRespond && gig.status === "pending" && onRespond;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -83,6 +92,12 @@ export default function GigDetailsModal({
               </dd>
             </div>
           )}
+          {gig.clientEmail && (
+            <div className="flex justify-between gap-4">
+              <dt className="text-slate-500">Contact</dt>
+              <dd className="font-medium text-slate-900">{gig.clientEmail}</dd>
+            </div>
+          )}
           {typeof gig.fee === "number" && (
             <div className="flex justify-between gap-4">
               <dt className="text-slate-500">Fee</dt>
@@ -101,24 +116,51 @@ export default function GigDetailsModal({
           )}
         </dl>
 
-        {showReminderToggle && onToggleReminder && gig.status !== "declined" && (
-          <label className="mt-6 flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 p-3 hover:bg-slate-50">
-            <input
-              type="checkbox"
-              checked={Boolean(gig.reminderOptIn)}
-              onChange={(e) => onToggleReminder(gig.id, e.target.checked)}
-              className="h-4 w-4 rounded border-slate-300"
-            />
-            <span className="text-sm font-medium text-slate-800">
-              Remind me about this gig
-            </span>
-          </label>
+        {showReminderToggle &&
+          onToggleReminder &&
+          gig.status !== "declined" && (
+            <label className="mt-6 flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 p-3 hover:bg-slate-50">
+              <input
+                type="checkbox"
+                checked={Boolean(gig.reminderOptIn)}
+                onChange={(e) => onToggleReminder(gig.id, e.target.checked)}
+                className="h-4 w-4 rounded border-slate-300"
+              />
+              <span className="text-sm font-medium text-slate-800">
+                Remind me about this gig
+              </span>
+            </label>
+          )}
+
+        {showActions && (
+          <div className="mt-6 grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              disabled={responding}
+              onClick={() => onRespond(gig.id, "declined")}
+              className="rounded-xl border border-rose-200 bg-rose-50 py-2.5 text-sm font-semibold text-rose-700 hover:bg-rose-100 disabled:opacity-60"
+            >
+              Decline
+            </button>
+            <button
+              type="button"
+              disabled={responding}
+              onClick={() => onRespond(gig.id, "confirmed")}
+              className="rounded-xl bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+            >
+              Accept
+            </button>
+          </div>
         )}
 
         <button
           type="button"
           onClick={onClose}
-          className="mt-4 w-full rounded-xl bg-slate-900 py-2.5 text-sm font-semibold text-white hover:bg-slate-800"
+          className={`mt-3 w-full rounded-xl py-2.5 text-sm font-semibold ${
+            showActions
+              ? "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+              : "bg-slate-900 text-white hover:bg-slate-800"
+          }`}
         >
           Close
         </button>

@@ -66,7 +66,7 @@ export default function Home() {
               <p className="text-slate-400">Artists live</p>
             </div>
             <div>
-              <p className="text-3xl font-black text-white">R12k–45k</p>
+              <p className="text-3xl font-black text-white">R12k–100k</p>
               <p className="text-slate-400">Transparent rates</p>
             </div>
             <div>

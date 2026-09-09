@@ -5,12 +5,16 @@ export async function getArtists(params?: {
   q?: string;
   genre?: string;
   location?: string;
-}): Promise<Artist[]> {
-  const { data } = await api.get<Artist[]>("/artists", { params });
+}) {
+  const { data } = await api.get<Artist[]>("/api/artists", {
+    params,
+  });
+
   return data;
 }
 
-export async function getArtistById(id: string): Promise<Artist> {
-  const { data } = await api.get<Artist>(`/artists/${id}`);
+export async function getArtistById(id: string) {
+  const { data } = await api.get<Artist>(`/api/artists/${id}`);
+
   return data;
 }

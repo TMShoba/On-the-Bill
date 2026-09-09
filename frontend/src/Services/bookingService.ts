@@ -1,5 +1,5 @@
 import { api } from "./api";
-import type { Booking } from "../Types/Artist";
+import type { Booking, BookingStatus } from "../Types/Artist";
 
 export type CreateBookingPayload = {
   artistId: string;
@@ -19,5 +19,13 @@ export async function createBooking(
 
 export async function getBookings(): Promise<Booking[]> {
   const { data } = await api.get<Booking[]>("/bookings");
+  return data;
+}
+
+export async function updateBookingStatusApi(
+  id: string,
+  status: BookingStatus
+): Promise<Booking> {
+  const { data } = await api.patch<Booking>(`/bookings/${id}`, { status });
   return data;
 }

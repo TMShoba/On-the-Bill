@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import MessagesPanel from "../../components/Messages/MessagesPanel";
 import { getDemoGigs } from "../../Services/demoStore";
 import { useAuth } from "../../context/AuthContext";
@@ -10,6 +10,7 @@ export default function PromoterDashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [selected, setSelected] = useState<Booking | null>(null);
+  const [tick, setTick] = useState(0);
   const gigs = useMemo(
     () =>
       getDemoGigs().filter(
@@ -17,8 +18,14 @@ export default function PromoterDashboard() {
           g.clientEmail === user?.email ||
           g.promoterName === user?.name
       ),
-    [user]
+    [user, tick]
   );
+
+  useEffect(() => {
+    const onFocus = () => setTick((t) => t + 1);
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, []);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
