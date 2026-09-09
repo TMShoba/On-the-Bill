@@ -5,32 +5,32 @@ import artistsRouter from "./routes/artists.js";
 import bookingsRouter from "./routes/bookings.js";
 import authRouter from "./routes/auth.js";
 
-// Auto-seed if empty
-const artistCount = db.prepare("SELECT COUNT(*) AS c FROM artists").get().c;
-if (artistCount === 0) {
+// Auto-seed database on startup
+try {
   await import("./seed.js");
+  console.log("Database seeded successfully.");
+} catch (error) {
+  console.error("Seed failed:", error);
 }
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+// CORS
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-      if (
-        origin.startsWith("http://localhost:") ||
-        origin.startsWith("http://127.0.0.1:")
-      ) {
-        return callback(null, true);
-      }
-      callback(new Error("Not allowed by CORS"));
-    },
+    origin: [
+      "http://localhost:5173",
+      "http://127.0.0.1:5173",
+      "https://on-the-bill.vercel.app",
+    ],
     credentials: true,
   })
 );
+
 app.use(express.json());
 
+// Root endpoint
 app.get("/", (_req, res) => {
   res.json({
     name: "On the Bill API",
@@ -46,6 +46,7 @@ app.get("/", (_req, res) => {
   });
 });
 
+// Health check
 app.get("/api/health", (_req, res) => {
   res.json({
     status: "ok",
@@ -54,15 +55,26 @@ app.get("/api/health", (_req, res) => {
   });
 });
 
+// Routes
 app.use("/api/artists", artistsRouter);
 app.use("/api/bookings", bookingsRouter);
 app.use("/api/auth", authRouter);
 
+// Error handler
 app.use((err, _req, res, _next) => {
   console.error(err);
-  res.status(500).json({ message: "Internal server error" });
+
+  res.status(500).json({
+    message: "Internal server error",
+    error: process.env.NODE_ENV === "development"
+      ? err.message
+      : undefined,
+  });
 });
 
+// Start server
 app.listen(PORT, () => {
-  console.log(`On the Bill API (SQLite) running at http://localhost:${PORT}`);
+  console.log(
+    `On the Bill API (SQLite) running on port ${PORT}`
+  );
 });
