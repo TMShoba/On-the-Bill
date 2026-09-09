@@ -33,7 +33,7 @@ app.use(express.json());
 // Root endpoint
 app.get("/", (_req, res) => {
   res.json({
-    name: "On the Bill API",
+    name: "The LineUp API",
     version: "1.1.0",
     database: "SQLite",
     endpoints: {
@@ -75,6 +75,6 @@ app.use((err, _req, res, _next) => {
 // Start server
 app.listen(PORT, () => {
   console.log(
-    `On the Bill API (SQLite) running on port ${PORT}`
+    `The LineUp API (SQLite) running on port ${PORT}`
   );
 });

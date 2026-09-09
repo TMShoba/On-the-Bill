@@ -1,4 +1,4 @@
-# On the Bill — API (SQLite)
+# The LineUp — API (SQLite)
 
 Express + SQLite backend. Data persists in `data/onthebill.db`.
 
