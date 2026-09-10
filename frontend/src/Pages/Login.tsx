@@ -36,7 +36,7 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-dvh bg-gradient-to-b from-slate-50 to-emerald-50/40 pb-mobile-nav">
       <NavBar />
 
       <div className="mx-auto flex max-w-md flex-col px-4 py-14 sm:py-20">
@@ -58,7 +58,7 @@ export default function Login() {
             <button
               type="button"
               onClick={() => quickLogin("artist")}
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-left text-sm font-medium text-slate-800 hover:bg-slate-100"
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-left text-sm font-medium text-slate-800 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-50/50 active:scale-[0.98]"
             >
               <span className="font-semibold">Artist</span>
               <span className="mt-0.5 block text-xs text-slate-500">
@@ -68,7 +68,7 @@ export default function Login() {
             <button
               type="button"
               onClick={() => quickLogin("promoter")}
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-left text-sm font-medium text-slate-800 hover:bg-slate-100"
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-left text-sm font-medium text-slate-800 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-50/50 active:scale-[0.98]"
             >
               <span className="font-semibold">Promoter</span>
               <span className="mt-0.5 block text-xs text-slate-500">
@@ -120,7 +120,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-xl bg-slate-900 py-3.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
+              className="w-full rounded-full bg-emerald-500 py-3.5 text-sm font-bold text-slate-950 shadow-lg shadow-emerald-500/25 transition hover:bg-emerald-400 active:scale-[0.98] disabled:opacity-60"
             >
               {loading ? "Signing in..." : "Sign in"}
             </button>

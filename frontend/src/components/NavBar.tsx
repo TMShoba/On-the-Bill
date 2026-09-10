@@ -2,6 +2,7 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../context/AuthContext";
 import { mockMessagingApi } from "../Services/mockMessagingApi";
+import NotificationBell from "./NotificationBell";
 
 export default function NavBar() {
   const { user, isAuthenticated, logout } = useAuth();
@@ -74,6 +75,7 @@ export default function NavBar() {
             </>
           ) : (
             <div className="ml-2 flex items-center gap-2">
+              <NotificationBell />
               <span className="hidden text-xs text-slate-500 lg:inline">
                 {user?.name} · {user?.role}
               </span>
@@ -91,8 +93,8 @@ export default function NavBar() {
           )}
         </nav>
 
-        {/* Mobile */}
         <div className="flex items-center gap-2 sm:hidden">
+          {isAuthenticated && <NotificationBell />}
           <Link to="/artists" className="text-sm font-medium text-slate-600">
             Artists
           </Link>

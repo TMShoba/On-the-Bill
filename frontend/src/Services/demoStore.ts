@@ -1,4 +1,8 @@
 import type { Booking } from "../Types/Artist";
+import {
+  notifyBookingStatusChange,
+  notifyNewBookingRequest,
+} from "./notificationStore";
 
 const GIGS_KEY = "otb_demo_gigs";
 
@@ -187,6 +191,14 @@ export function addPromoterBooking(input: {
     createdAt: new Date().toISOString(),
   };
   upsertDemoGig(gig);
+
+  notifyNewBookingRequest({
+    artistId: gig.artistId,
+    promoterName: gig.promoterName || gig.clientName,
+    venue: gig.venue || "an event",
+    eventDate: gig.eventDate,
+  });
+
   return gig;
 }
 
@@ -198,7 +210,22 @@ export function updateBookingStatus(
   const gigs = getDemoGigs();
   const idx = gigs.findIndex((g) => g.id === gigId);
   if (idx < 0) return null;
-  gigs[idx] = { ...gigs[idx], status };
+  const prev = gigs[idx];
+  gigs[idx] = { ...prev, status };
   writeGigs(gigs);
+
+  const promoterId =
+    prev.clientEmail === DEMO_PROMOTER.email
+      ? DEMO_PROMOTER.id
+      : prev.clientEmail;
+  notifyBookingStatusChange({
+    promoterId,
+    artistId: prev.artistId,
+    artistName: prev.artistName,
+    venue: prev.venue || "your event",
+    eventDate: prev.eventDate,
+    status,
+  });
+
   return gigs[idx];
 }

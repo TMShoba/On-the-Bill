@@ -35,7 +35,7 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-dvh bg-gradient-to-b from-slate-50 to-emerald-50/40 pb-mobile-nav">
       <NavBar />
 
       <div className="mx-auto flex max-w-md flex-col px-4 py-14 sm:py-20">

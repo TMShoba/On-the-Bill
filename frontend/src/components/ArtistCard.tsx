@@ -1,5 +1,8 @@
 import { Link } from "react-router-dom";
+import { useState } from "react";
 import { resolveArtistImage } from "../utils/imageCdn";
+import { useAuth } from "../context/AuthContext";
+import { isFavorite, toggleFavorite } from "../Services/favoritesStore";
 
 type Artist = {
   id: string;
@@ -15,12 +18,27 @@ interface ArtistCardProps {
 }
 
 export default function ArtistCard({ artist }: ArtistCardProps) {
+  const { user, isAuthenticated } = useAuth();
   const src = resolveArtistImage(artist.imageUrl, artist.id, "card");
+  const canSave =
+    isAuthenticated &&
+    (user?.role === "promoter" || user?.role === "client");
+  const [saved, setSaved] = useState(() =>
+    user ? isFavorite(user.id, artist.id) : false
+  );
+
+  function onToggleSave(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!user || !canSave) return;
+    const nowSaved = toggleFavorite(user.id, artist);
+    setSaved(nowSaved);
+  }
 
   return (
     <Link
       to={`/artists/${artist.id}`}
-      className="group block overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-xl"
+      className="group relative block overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-xl"
     >
       <div className="relative aspect-[4/5] overflow-hidden bg-slate-100">
         <img
@@ -34,6 +52,20 @@ export default function ArtistCard({ artist }: ArtistCardProps) {
         <span className="absolute bottom-3 left-3 rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-slate-800 shadow-sm backdrop-blur">
           {artist.genre}
         </span>
+        {canSave && (
+          <button
+            type="button"
+            onClick={onToggleSave}
+            title={saved ? "Remove from saved" : "Save for later"}
+            className={`absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full shadow-md backdrop-blur transition ${
+              saved
+                ? "bg-rose-500 text-white"
+                : "bg-white/90 text-slate-600 hover:bg-white hover:text-rose-500"
+            }`}
+          >
+            {saved ? "♥" : "♡"}
+          </button>
+        )}
       </div>
 
       <div className="p-5 text-left">

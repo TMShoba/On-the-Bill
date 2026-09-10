@@ -3,31 +3,152 @@
 @theme {
   --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
+  --color-brand: #10b981;
+  --color-brand-dark: #059669;
+  --color-ink: #0f172a;
+  --color-muted: #64748b;
+  --radius-card: 1.25rem;
+  --shadow-soft: 0 4px 24px -4px rgb(15 23 42 / 0.08),
+    0 2px 8px -2px rgb(15 23 42 / 0.04);
+  --shadow-lift: 0 12px 40px -12px rgb(15 23 42 / 0.18);
 }
 
 * {
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
 html {
   scroll-behavior: smooth;
+  /* Prevent iOS bounce gaps */
+  height: 100%;
 }
 
 body {
   margin: 0;
+  min-height: 100%;
+  min-height: 100dvh;
   font-family: var(--font-sans);
-  background-color: #ffffff;
+  background-color: #f8fafc;
   color: #0f172a;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Safe areas for notched phones */
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  /* Comfortable mobile type */
+  font-size: 16px;
+  line-height: 1.5;
+  overscroll-behavior-y: none;
 }
 
 #root {
   min-height: 100svh;
+  min-height: 100dvh;
   width: 100%;
 }
 
 img {
   max-width: 100%;
   display: block;
+}
+
+/* Hide ugly scrollbars on horizontal carousels */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Touch-friendly buttons */
+button,
+a,
+[role="button"] {
+  touch-action: manipulation;
+}
+
+/* Smooth active press on interactive cards */
+.pressable {
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+.pressable:active {
+  transform: scale(0.97);
+}
+
+/* Soft card surface */
+.card-surface {
+  background: #fff;
+  border: 1px solid rgb(226 232 240);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-soft);
+}
+
+/* Glass header */
+.glass {
+  background: rgb(255 255 255 / 0.85);
+  backdrop-filter: blur(12px) saturate(1.4);
+  -webkit-backdrop-filter: blur(12px) saturate(1.4);
+}
+
+/* Bottom nav clearance on mobile */
+.pb-mobile-nav {
+  padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+}
+@media (min-width: 640px) {
+  .pb-mobile-nav {
+    padding-bottom: 2rem;
+  }
+}
+
+/* Input focus ring — brand */
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 3px rgb(16 185 129 / 0.2);
+}
+
+/* Subtle page enter */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-up {
+  animation: fade-up 0.35s ease-out both;
+}
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+.animate-pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+/* Horizontal snap for roster / filters */
+.snap-x-mandatory {
+  scroll-snap-type: x mandatory;
+}
+.snap-start {
+  scroll-snap-align: start;
+}
+
+/* Selection color */
+::selection {
+  background: rgb(16 185 129 / 0.25);
+  color: #0f172a;
 }

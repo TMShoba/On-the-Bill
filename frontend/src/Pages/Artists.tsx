@@ -69,10 +69,10 @@ export default function Artists() {
     Boolean(maxRate);
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-dvh bg-slate-50 pb-mobile-nav">
       <NavBar />
 
-      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
+      <div className="mx-auto max-w-6xl px-3 py-6 sm:px-6 sm:py-14 animate-fade-up">
         <div className="mb-8">
           <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
             Browse Artists
@@ -82,7 +82,7 @@ export default function Artists() {
           </p>
         </div>
 
-        <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <div className="mb-6 sticky top-14 z-30 -mx-3 rounded-none border-y border-slate-200/80 bg-white/95 p-3 shadow-sm backdrop-blur-lg sm:static sm:mx-0 sm:rounded-2xl sm:border sm:p-5">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
             <div className="lg:col-span-2">
               <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -181,7 +181,7 @@ export default function Artists() {
         </div>
 
         {isLoading && (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {[1, 2, 3, 4].map((i) => (
               <div
                 key={i}
@@ -209,7 +209,7 @@ export default function Artists() {
         )}
 
         {filtered.length > 0 && (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filtered.map((artist) => (
               <ArtistCard key={artist.id} artist={artist} />
             ))}

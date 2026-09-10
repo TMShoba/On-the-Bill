@@ -17,7 +17,7 @@ const roster = [
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
+    <div className="min-h-dvh bg-slate-950 text-white pb-mobile-nav">
       <NavBar />
 
       {/* HERO — dark, high-impact */}

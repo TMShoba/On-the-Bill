@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import NavBar from "../components/NavBar";
 import { useArtist } from "../hooks/useArtists";
@@ -22,6 +22,7 @@ import {
   type ManualPaymentDetails,
 } from "../Services/payfastService";
 import { getStoredArtistPhoto } from "../components/ArtistPhotoUpload";
+import { isFavorite, toggleFavorite } from "../Services/favoritesStore";
 
 export default function ArtistDetails() {
   const { id } = useParams();
@@ -35,6 +36,7 @@ export default function ArtistDetails() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
   const [manualDetails, setManualDetails] =
     useState<ManualPaymentDetails | null>(null);
+  const [saved, setSaved] = useState(false);
 
   const busyDates = useMemo(() => {
     const gigs = getDemoGigs();
@@ -51,6 +53,12 @@ export default function ArtistDetails() {
       undefined
     );
   }, [artist]);
+
+  useEffect(() => {
+    if (artist && user) {
+      setSaved(isFavorite(user.id, artist.id));
+    }
+  }, [artist, user]);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -328,21 +336,42 @@ export default function ArtistDetails() {
             )}
 
             {!showForm ? (
-              <button
-                type="button"
-                className="mt-8 w-full rounded-xl bg-slate-900 px-8 py-4 text-base font-semibold text-white hover:bg-slate-800 sm:w-auto"
-                onClick={() => {
-                  if (!isAuthenticated) {
-                    navigate("/login");
-                    return;
-                  }
-                  setShowForm(true);
-                  setSuccess(false);
-                  setManualDetails(null);
-                }}
-              >
-                Request Booking
-              </button>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  className="w-full rounded-xl bg-slate-900 px-8 py-4 text-base font-semibold text-white hover:bg-slate-800 sm:w-auto"
+                  onClick={() => {
+                    if (!isAuthenticated) {
+                      navigate("/login");
+                      return;
+                    }
+                    setShowForm(true);
+                    setSuccess(false);
+                    setManualDetails(null);
+                  }}
+                >
+                  Request Booking
+                </button>
+                {isAuthenticated &&
+                  (user?.role === "promoter" || user?.role === "client") &&
+                  artist && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!user) return;
+                        const now = toggleFavorite(user.id, artist);
+                        setSaved(now);
+                      }}
+                      className={`inline-flex items-center gap-2 rounded-xl border px-5 py-4 text-sm font-semibold ${
+                        saved
+                          ? "border-rose-200 bg-rose-50 text-rose-700"
+                          : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                      }`}
+                    >
+                      {saved ? "♥ Saved" : "♡ Save for later"}
+                    </button>
+                  )}
+              </div>
             ) : (
               <form
                 onSubmit={handleSubmit}

@@ -6,6 +6,7 @@ import Register from "./Pages/Register";
 import DashboardRedirect from "./Pages/DashboardRedirect";
 import Artists from "./Pages/Artists";
 import { AuthProvider } from "./context/AuthContext";
+import MobileBottomNav from "./components/MobileBottomNav";
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/dashboard" element={<DashboardRedirect />} />
         </Routes>
+        <MobileBottomNav />
       </BrowserRouter>
     </AuthProvider>
   );

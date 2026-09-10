@@ -1,4 +1,5 @@
 import type { Conversation, Message, MessageAttachment } from "../Types/Artist";
+import { notifyNewMessage } from "./notificationStore";
 
 const CONV_KEY = "otb_conversations";
 const MSG_KEY = "otb_messages";
@@ -81,12 +82,24 @@ export const mockMessagingApi = {
     const convs = read<Conversation[]>(CONV_KEY, []);
     const idx = convs.findIndex((c) => c.id === input.conversationId);
     if (idx >= 0) {
+      const conv = convs[idx];
       convs[idx] = {
-        ...convs[idx],
+        ...conv,
         lastMessageAt: msg.createdAt,
         lastMessagePreview: preview.slice(0, 80),
       };
       write(CONV_KEY, convs);
+
+      // Notify the other party
+      const recipientId =
+        input.senderId === conv.artistId ? conv.promoterId : conv.artistId;
+      if (recipientId && recipientId !== input.senderId) {
+        notifyNewMessage({
+          recipientId,
+          senderName: input.senderName,
+          preview: preview,
+        });
+      }
     }
 
     return msg;

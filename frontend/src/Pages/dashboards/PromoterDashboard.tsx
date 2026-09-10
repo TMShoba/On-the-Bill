@@ -5,18 +5,25 @@ import { getDemoGigs } from "../../Services/demoStore";
 import { useAuth } from "../../context/AuthContext";
 import type { Booking } from "../../Types/Artist";
 import GigDetailsModal from "../../components/GigDetailsModal";
+import {
+  getFavorites,
+  removeFavorite,
+  type SavedArtist,
+} from "../../Services/favoritesStore";
+import { resolveArtistImage } from "../../utils/imageCdn";
 
 export default function PromoterDashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [selected, setSelected] = useState<Booking | null>(null);
   const [tick, setTick] = useState(0);
+  const [favorites, setFavorites] = useState<SavedArtist[]>([]);
+
   const gigs = useMemo(
     () =>
       getDemoGigs().filter(
         (g) =>
-          g.clientEmail === user?.email ||
-          g.promoterName === user?.name
+          g.clientEmail === user?.email || g.promoterName === user?.name
       ),
     [user, tick]
   );
@@ -27,6 +34,14 @@ export default function PromoterDashboard() {
     return () => window.removeEventListener("focus", onFocus);
   }, []);
 
+  useEffect(() => {
+    if (user) setFavorites(getFavorites(user.id));
+  }, [user, tick]);
+
+  function refreshFavorites() {
+    if (user) setFavorites(getFavorites(user.id));
+  }
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -35,7 +50,7 @@ export default function PromoterDashboard() {
             Promoter dashboard
           </h1>
           <p className="mt-1 text-slate-500">
-            Hi {user?.name} — manage requests and messages
+            Hi {user?.name} — manage requests, shortlist, and messages
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -56,6 +71,73 @@ export default function PromoterDashboard() {
             Log out
           </button>
         </div>
+      </div>
+
+      <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900">Saved artists</h2>
+            <p className="text-sm text-slate-500">
+              Your shortlist for the next event — browse today, book later
+            </p>
+          </div>
+          <Link
+            to="/artists"
+            className="text-sm font-semibold text-emerald-700 hover:text-emerald-800"
+          >
+            + Add from browse
+          </Link>
+        </div>
+        {favorites.length === 0 ? (
+          <p className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-500">
+            No saved artists yet. Tap the heart on any artist card while browsing
+            to build your shortlist.
+          </p>
+        ) : (
+          <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {favorites.map((a) => (
+              <li
+                key={a.id}
+                className="flex items-center gap-3 rounded-xl border border-slate-100 p-3"
+              >
+                <Link
+                  to={`/artists/${a.id}`}
+                  className="flex min-w-0 flex-1 items-center gap-3"
+                >
+                  <img
+                    src={resolveArtistImage(a.imageUrl, a.id, "card")}
+                    alt=""
+                    className="h-12 w-12 shrink-0 rounded-lg object-cover"
+                  />
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold text-slate-900">
+                      {a.stageName}
+                    </p>
+                    <p className="truncate text-xs text-slate-500">
+                      {a.genre} · {a.location}
+                    </p>
+                    <p className="text-xs font-semibold text-emerald-600">
+                      R{a.rate.toLocaleString()}+
+                    </p>
+                  </div>
+                </Link>
+                <button
+                  type="button"
+                  title="Remove from saved"
+                  onClick={() => {
+                    if (user) {
+                      removeFavorite(user.id, a.id);
+                      refreshFavorites();
+                    }
+                  }}
+                  className="rounded-lg p-2 text-rose-500 hover:bg-rose-50"
+                >
+                  ♥
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

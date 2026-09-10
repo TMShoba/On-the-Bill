@@ -4,6 +4,7 @@ import GigDetailsModal from "../../components/GigDetailsModal";
 import RemindersPanel from "../../components/RemindersPanel";
 import MessagesPanel from "../../components/Messages/MessagesPanel";
 import ArtistPhotoUpload from "../../components/ArtistPhotoUpload";
+import EarningsStats from "../../components/EarningsStats";
 import {
   getDemoGigs,
   toggleReminder,
@@ -94,6 +95,9 @@ export default function ArtistDashboard() {
           <p className="text-2xl font-bold text-rose-500">{stats.declined}</p>
         </div>
       </div>
+
+      {/* Earnings & retention stats */}
+      <EarningsStats gigs={mine} />
 
       {/* Profile photo upload for the artist's own dashboard */}
       <div className="mb-8">
