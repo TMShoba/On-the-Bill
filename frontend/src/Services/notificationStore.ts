@@ -3,6 +3,7 @@ export type NotificationType =
   | "booking_declined"
   | "booking_request"
   | "message"
+  | "booking_paid"
   | "system";
 
 export type AppNotification = {
@@ -134,4 +135,41 @@ export function notifyNewMessage(input: {
     href: "/dashboard",
     email: true,
   });
+}
+
+export function notifyPaymentReceived(input: {
+  artistId: string;
+  promoterId: string;
+  amount: number;
+  venue: string;
+  kind: "deposit" | "full";
+}) {
+  const label = input.kind === "deposit" ? "Deposit" : "Payment";
+  const amt = `R${input.amount.toLocaleString()}`;
+  pushNotification({
+    userId: input.artistId,
+    type: "booking_paid",
+    title: `${label} received`,
+    body: `${label} of ${amt} for ${input.venue} was marked paid. (Email sent)`,
+    href: "/dashboard",
+    email: true,
+  });
+  pushNotification({
+    userId: input.promoterId,
+    type: "booking_paid",
+    title: `${label} confirmed`,
+    body: `Your ${label.toLowerCase()} of ${amt} for ${input.venue} is on record. Receipt is in the booking.`,
+    href: "/dashboard",
+    email: true,
+  });
+}
+
+/** Demo helper — surfaces that email would be sent for key events */
+export function describeEmailEvents(): string[] {
+  return [
+    "New booking request → email to artist",
+    "Booking accepted / declined → email to promoter",
+    "Deposit or full payment marked → email to both",
+    "New message → email to recipient",
+  ];
 }

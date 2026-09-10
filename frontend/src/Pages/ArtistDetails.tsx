@@ -19,10 +19,15 @@ import {
   type PaymentMethod,
   redirectToPayFast,
   getManualPaymentDetails,
+  payfastAmountFor,
   type ManualPaymentDetails,
 } from "../Services/payfastService";
 import { getStoredArtistPhoto } from "../components/ArtistPhotoUpload";
 import { isFavorite, toggleFavorite } from "../Services/favoritesStore";
+import CompletedBadge from "../components/CompletedBadge";
+import Footer from "../components/Footer";
+import { getArtistBadges } from "../Services/reputationStore";
+import { getFeeBreakdown } from "../Services/platformFees";
 
 export default function ArtistDetails() {
   const { id } = useParams();
@@ -59,6 +64,15 @@ export default function ArtistDetails() {
       setSaved(isFavorite(user.id, artist.id));
     }
   }, [artist, user]);
+
+  const badges = useMemo(
+    () => (artist ? getArtistBadges(artist.id) : null),
+    [artist]
+  );
+  const feePreview = useMemo(
+    () => getFeeBreakdown(artist?.rate || 0),
+    [artist]
+  );
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -114,10 +128,11 @@ export default function ArtistDetails() {
       }
 
       if (paymentMethod === "card") {
+        const { amount: chargeAmount } = payfastAmountFor(payload.fee, "deposit");
         redirectToPayFast({
-          amount: payload.fee,
-          itemName: `Booking: ${artist.stageName} — ${payload.venue}`,
-          itemDescription: `${payload.eventDate} ${payload.time || ""}`.trim(),
+          amount: chargeAmount,
+          itemName: `Deposit: ${artist.stageName} — ${payload.venue}`,
+          itemDescription: `Deposit + platform fee · ${payload.eventDate} ${payload.time || ""}`.trim(),
           email: user?.email,
           nameFirst: user?.name?.split(" ")[0],
           nameLast: user?.name?.split(" ").slice(1).join(" ") || undefined,
@@ -216,7 +231,7 @@ export default function ArtistDetails() {
 
         <div className="grid items-start gap-10 lg:grid-cols-2">
           <div>
-            <div className="overflow-hidden rounded-2xl bg-slate-100 shadow-lg">
+            <div className="relative overflow-hidden rounded-3xl bg-slate-100 shadow-xl ring-1 ring-slate-900/5">
               <img
                 src={
                   profilePhoto ||
@@ -225,6 +240,20 @@ export default function ArtistDetails() {
                 alt={artist.stageName}
                 className="aspect-[4/3] w-full object-cover"
               />
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-900/50 via-transparent to-transparent" />
+              <div className="absolute bottom-4 left-4 right-4 flex flex-wrap items-end justify-between gap-2">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-white/80">
+                    {artist.genre} · {artist.location}
+                  </p>
+                  <h1 className="text-2xl font-extrabold text-white drop-shadow sm:text-3xl">
+                    {artist.stageName}
+                  </h1>
+                </div>
+                {badges?.completedBooking && (
+                  <CompletedBadge label={badges.label} count={badges.completedCount} />
+                )}
+              </div>
             </div>
 
             {/* Lighter public-facing availability calendar */}
@@ -249,10 +278,26 @@ export default function ArtistDetails() {
             </h1>
             <p className="mt-2 text-slate-500">{artist.location}</p>
 
-            <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-5">
+            <div className="mt-8 rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-emerald-50/40 p-5 shadow-sm">
               <p className="text-sm font-medium text-slate-500">Starting from</p>
               <p className="mt-1 text-3xl font-extrabold text-emerald-600">
                 R{artist.rate.toLocaleString()}+
+              </p>
+              {badges?.completedBooking && (
+                <div className="mt-3">
+                  <CompletedBadge
+                    label={badges.label}
+                    count={badges.completedCount}
+                    size="md"
+                  />
+                </div>
+              )}
+              <p className="mt-3 text-xs leading-relaxed text-slate-500">
+                {feePreview.summary} Deposit from{" "}
+                <span className="font-semibold text-slate-800">
+                  R{feePreview.depositTotal.toLocaleString()}
+                </span>
+                .
               </p>
             </div>
 
@@ -516,6 +561,43 @@ export default function ArtistDetails() {
                   </div>
                 </fieldset>
 
+                {feePreview.performanceFee > 0 && (
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm">
+                    <p className="font-bold text-slate-900">Payment breakdown</p>
+                    <dl className="mt-2 space-y-1.5 text-slate-600">
+                      <div className="flex justify-between gap-2">
+                        <dt>Performance fee</dt>
+                        <dd className="font-medium text-slate-900">
+                          R{feePreview.performanceFee.toLocaleString()}
+                        </dd>
+                      </div>
+                      <div className="flex justify-between gap-2">
+                        <dt>Platform fee (promoter)</dt>
+                        <dd className="font-medium text-slate-900">
+                          R{feePreview.platformFee.toLocaleString()}
+                        </dd>
+                      </div>
+                      <div className="flex justify-between gap-2 border-t border-slate-200 pt-1.5">
+                        <dt className="font-semibold text-slate-900">
+                          Deposit due now
+                        </dt>
+                        <dd className="font-bold text-emerald-700">
+                          R{feePreview.depositTotal.toLocaleString()}
+                        </dd>
+                      </div>
+                      <div className="flex justify-between gap-2">
+                        <dt>Full total if paid upfront</dt>
+                        <dd className="font-medium">
+                          R{feePreview.fullTotal.toLocaleString()}
+                        </dd>
+                      </div>
+                    </dl>
+                    <p className="mt-2 text-xs text-slate-500">
+                      {feePreview.summary}
+                    </p>
+                  </div>
+                )}
+
                 <div className="flex gap-3 pt-2">
                   <button
                     type="submit"
@@ -525,7 +607,7 @@ export default function ArtistDetails() {
                     {submitting
                       ? "Processing..."
                       : paymentMethod === "card"
-                        ? "Pay with PayFast"
+                        ? "Pay deposit with PayFast"
                         : "Send request & get bank details"}
                   </button>
                   <button
@@ -541,6 +623,7 @@ export default function ArtistDetails() {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

@@ -1,3 +1,5 @@
+import { recordSuccessfulGig } from "./reputationStore";
+import { notifyPaymentReceived } from "./notificationStore";
 import type { Booking } from "../Types/Artist";
 import {
   notifyBookingStatusChange,
@@ -258,6 +260,24 @@ export function markBookingPaid(
     disputedAt: undefined,
   };
   writeGigs(gigs);
+  if (mode === "paid" || mode === "deposit") {
+    try {
+      if (mode === "paid") recordSuccessfulGig(prev.artistId);
+      const promoterId =
+        prev.clientEmail === DEMO_PROMOTER.email
+          ? DEMO_PROMOTER.id
+          : prev.clientEmail;
+      notifyPaymentReceived({
+        artistId: prev.artistId,
+        promoterId,
+        amount: prev.fee || 0,
+        venue: prev.venue || "your event",
+        kind: mode === "deposit" ? "deposit" : "full",
+      });
+    } catch {
+      /* ignore */
+    }
+  }
   return gigs[idx];
 }
 

@@ -1,3 +1,4 @@
+import { getFeeBreakdown } from "./platformFees";
 /**
  * PayFast (South Africa) payment gateway helpers.
  * Docs: https://developers.payfast.co.za/
@@ -117,5 +118,18 @@ export function getManualPaymentDetails(
     branchCode: "051001",
     reference: bookingRef.slice(0, 20).toUpperCase(),
     amount,
+  };
+}
+
+
+/** Amount to send to PayFast for deposit or full (includes platform fee) */
+export function payfastAmountFor(
+  performanceFee: number,
+  kind: "deposit" | "full"
+): { amount: number; breakdown: ReturnType<typeof getFeeBreakdown> } {
+  const breakdown = getFeeBreakdown(performanceFee);
+  return {
+    amount: kind === "deposit" ? breakdown.depositTotal : breakdown.fullTotal,
+    breakdown,
   };
 }

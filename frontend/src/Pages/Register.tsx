@@ -126,6 +126,25 @@ export default function Register() {
               </select>
             </div>
 
+            <label className="flex items-start gap-2 text-xs text-slate-600">
+              <input type="checkbox" required className="mt-0.5 rounded border-slate-300" />
+              <span>
+                I agree to the{" "}
+                <Link to="/legal/terms" className="font-semibold text-emerald-700 underline">
+                  Terms of use
+                </Link>
+                ,{" "}
+                <Link to="/legal/privacy" className="font-semibold text-emerald-700 underline">
+                  Privacy policy
+                </Link>
+                , and{" "}
+                <Link to="/legal/cancellation" className="font-semibold text-emerald-700 underline">
+                  Cancellation rules
+                </Link>
+                .
+              </span>
+            </label>
+
             <button
               type="submit"
               disabled={loading}
