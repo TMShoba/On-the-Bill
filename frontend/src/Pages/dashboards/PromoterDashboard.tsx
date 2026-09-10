@@ -1,7 +1,12 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import MessagesPanel from "../../components/Messages/MessagesPanel";
-import { getDemoGigs } from "../../Services/demoStore";
+import {
+  getDemoGigs,
+  markBookingPaid,
+  openBookingDispute,
+} from "../../Services/demoStore";
+import TrustEducation from "../../components/TrustEducation";
 import { useAuth } from "../../context/AuthContext";
 import type { Booking } from "../../Types/Artist";
 import GigDetailsModal from "../../components/GigDetailsModal";
@@ -43,20 +48,23 @@ export default function PromoterDashboard() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="mx-auto max-w-6xl px-3 py-5 sm:px-6 sm:py-8">
+      <div className="mb-6 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
-            Promoter dashboard
+          <p className="text-xs font-bold uppercase tracking-widest text-emerald-600">
+            Promoter
+          </p>
+          <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+            Hey, {user?.name?.split(" ")[0] || "there"} 👋
           </h1>
-          <p className="mt-1 text-slate-500">
-            Hi {user?.name} — manage requests, shortlist, and messages
+          <p className="mt-1 text-sm text-slate-500">
+            Shortlist, requests & messages
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Link
             to="/artists"
-            className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800"
+            className="inline-flex items-center justify-center rounded-full bg-emerald-500 px-5 py-2.5 text-sm font-bold text-slate-950 shadow-md shadow-emerald-500/20 hover:bg-emerald-400 active:scale-95"
           >
             Browse Artists
           </Link>
@@ -66,7 +74,7 @@ export default function PromoterDashboard() {
               logout();
               navigate("/");
             }}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+            className="hidden rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 sm:inline-flex"
           >
             Log out
           </button>
@@ -166,7 +174,9 @@ export default function PromoterDashboard() {
                 </div>
                 <span
                   className={`w-fit rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ${
-                    g.status === "confirmed"
+                    g.status === "paid"
+                      ? "bg-sky-50 text-sky-700"
+                      : g.status === "confirmed"
                       ? "bg-emerald-50 text-emerald-700"
                       : g.status === "declined"
                         ? "bg-rose-50 text-rose-700"
@@ -174,11 +184,18 @@ export default function PromoterDashboard() {
                   }`}
                 >
                   {g.status}
+                  {g.paymentStatus && g.paymentStatus !== "unpaid" && g.status !== "paid"
+                    ? ` · ${g.paymentStatus}`
+                    : ""}
                 </span>
               </li>
             ))}
           </ul>
         )}
+      </div>
+
+      <div className="mb-8">
+        <TrustEducation compact />
       </div>
 
       <MessagesPanel />
@@ -188,6 +205,18 @@ export default function PromoterDashboard() {
         gig={selected}
         onClose={() => setSelected(null)}
         showReminderToggle={false}
+        showArtistBanking
+        canManagePayment
+        onMarkPaid={(id, mode) => {
+          const updated = markBookingPaid(id, mode);
+          setTick((t) => t + 1);
+          if (updated) setSelected(updated);
+        }}
+        onDispute={(id, reason) => {
+          const updated = openBookingDispute(id, reason);
+          setTick((t) => t + 1);
+          if (updated) setSelected(updated);
+        }}
       />
     </div>
   );

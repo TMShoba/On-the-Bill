@@ -8,7 +8,9 @@ export type Artist = {
   bio?: string;
 };
 
-export type BookingStatus = "pending" | "confirmed" | "declined";
+export type BookingStatus = "pending" | "confirmed" | "declined" | "paid";
+
+export type PaymentStatus = "unpaid" | "deposit" | "paid" | "disputed";
 
 export type Booking = {
   id: string;
@@ -28,6 +30,11 @@ export type Booking = {
   promoterName?: string;
   notes?: string;
   reminderOptIn?: boolean;
+  /** Money trail — separate from lifecycle status for clarity */
+  paymentStatus?: PaymentStatus;
+  paidAt?: string;
+  disputeReason?: string;
+  disputedAt?: string;
 };
 
 export type UserRole = "artist" | "promoter" | "client";

@@ -22,7 +22,7 @@ type Props = {
 
 export default function EarningsStats({ gigs }: Props) {
   const stats = useMemo(() => {
-    const confirmed = gigs.filter((g) => g.status === "confirmed");
+    const confirmed = gigs.filter((g) => g.status === "confirmed" || g.status === "paid");
     const totalEarned = confirmed.reduce(
       (sum, g) => sum + (typeof g.fee === "number" ? g.fee : 0),
       0

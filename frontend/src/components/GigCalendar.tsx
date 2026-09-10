@@ -5,6 +5,7 @@ const STATUS_COLOR: Record<BookingStatus, string> = {
   confirmed: "bg-emerald-500",
   pending: "bg-amber-400",
   declined: "bg-rose-400",
+  paid: "bg-sky-500",
 };
 
 type Props = {

@@ -4,11 +4,15 @@ import GigDetailsModal from "../../components/GigDetailsModal";
 import RemindersPanel from "../../components/RemindersPanel";
 import MessagesPanel from "../../components/Messages/MessagesPanel";
 import ArtistPhotoUpload from "../../components/ArtistPhotoUpload";
+import ProfileStrengthMeter from "../../components/ProfileStrengthMeter";
+import BankingDetailsForm from "../../components/BankingDetailsForm";
 import EarningsStats from "../../components/EarningsStats";
+import TrustEducation from "../../components/TrustEducation";
 import {
   getDemoGigs,
   toggleReminder,
   updateBookingStatus,
+  openBookingDispute,
   DEMO_ARTIST,
 } from "../../Services/demoStore";
 import type { Booking } from "../../Types/Artist";
@@ -23,6 +27,7 @@ export default function ArtistDashboard() {
   const [dayGigs, setDayGigs] = useState<Booking[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [responding, setResponding] = useState(false);
+  const [profileTick, setProfileTick] = useState(0);
   const artistId = user?.id || DEMO_ARTIST.id;
 
   const mine = useMemo(
@@ -58,15 +63,17 @@ export default function ArtistDashboard() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
+    <div className="mx-auto max-w-6xl px-3 py-5 sm:px-6 sm:py-8">
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-3 sm:mb-8">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
-            Artist dashboard
+          <p className="text-xs font-bold uppercase tracking-widest text-emerald-600">
+            Artist
+          </p>
+          <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+            Hey, {user?.name?.split(" ")[0] || "there"} 👋
           </h1>
-          <p className="mt-1 text-slate-500">
-            Hi {user?.name} — check availability, respond to requests, and manage
-            gigs
+          <p className="mt-1 text-sm text-slate-500 sm:text-base">
+            Availability, requests, earnings & messages
           </p>
         </div>
         <button
@@ -75,7 +82,7 @@ export default function ArtistDashboard() {
             logout();
             navigate("/");
           }}
-          className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+          className="hidden rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 sm:inline-flex"
         >
           Log out
         </button>
@@ -99,9 +106,25 @@ export default function ArtistDashboard() {
       {/* Earnings & retention stats */}
       <EarningsStats gigs={mine} />
 
-      {/* Profile photo upload for the artist's own dashboard */}
-      <div className="mb-8">
-        <ArtistPhotoUpload artistId={artistId} />
+      <div className="mb-8 grid gap-6 lg:grid-cols-2">
+        <ProfileStrengthMeter
+          artistId={artistId}
+          hasPublicBio
+          refreshKey={profileTick}
+        />
+        <div className="space-y-6">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 className="mb-3 text-lg font-bold text-slate-900">Profile photo</h2>
+            <ArtistPhotoUpload
+              artistId={artistId}
+              onPhotoChange={() => setProfileTick((n) => n + 1)}
+            />
+          </div>
+          <BankingDetailsForm
+            artistId={artistId}
+            onSaved={() => setProfileTick((n) => n + 1)}
+          />
+        </div>
       </div>
 
       {/* Pending booking requests — accept / decline journey */}
@@ -244,6 +267,10 @@ export default function ArtistDashboard() {
         <MessagesPanel />
       </div>
 
+      <div className="mt-8">
+        <TrustEducation compact />
+      </div>
+
       <GigDetailsModal
         open={modalOpen}
         gig={selected}
@@ -252,6 +279,11 @@ export default function ArtistDashboard() {
         canRespond
         responding={responding}
         onRespond={handleRespond}
+        onDispute={(id, reason) => {
+          const updated = openBookingDispute(id, reason);
+          refresh();
+          if (updated) setSelected(updated);
+        }}
         onToggleReminder={(id, value) => {
           toggleReminder(id, value);
           refresh();

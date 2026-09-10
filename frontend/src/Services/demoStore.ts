@@ -71,6 +71,8 @@ export function ensureDemoGigs() {
       notes: "Main room, 2-hour set. Load-in 18:00.",
       message: "Amapiano night — confirmed",
       status: "confirmed",
+      paymentStatus: "paid",
+      paidAt: new Date().toISOString(),
       reminderOptIn: true,
       createdAt: new Date().toISOString(),
     },
@@ -90,6 +92,7 @@ export function ensureDemoGigs() {
       notes: "Club set until 02:00. Guest list 10.",
       message: "Pending confirmation",
       status: "pending",
+      paymentStatus: "unpaid",
       reminderOptIn: false,
       createdAt: new Date().toISOString(),
     },
@@ -109,6 +112,7 @@ export function ensureDemoGigs() {
       notes: "Outdoor stage. Soundcheck 16:00.",
       message: "Festival booking",
       status: "confirmed",
+      paymentStatus: "deposit",
       reminderOptIn: true,
       createdAt: new Date().toISOString(),
     },
@@ -211,7 +215,12 @@ export function updateBookingStatus(
   const idx = gigs.findIndex((g) => g.id === gigId);
   if (idx < 0) return null;
   const prev = gigs[idx];
-  gigs[idx] = { ...prev, status };
+  gigs[idx] = {
+    ...prev,
+    status,
+    paymentStatus:
+      status === "confirmed" ? prev.paymentStatus || "unpaid" : prev.paymentStatus,
+  };
   writeGigs(gigs);
 
   const promoterId =
@@ -227,5 +236,46 @@ export function updateBookingStatus(
     status,
   });
 
+  return gigs[idx];
+}
+
+/** Promoter marks payment sent / complete */
+export function markBookingPaid(
+  gigId: string,
+  mode: "deposit" | "paid" = "paid"
+): Booking | null {
+  const gigs = getDemoGigs();
+  const idx = gigs.findIndex((g) => g.id === gigId);
+  if (idx < 0) return null;
+  const prev = gigs[idx];
+  if (prev.status !== "confirmed" && prev.status !== "paid") return prev;
+  gigs[idx] = {
+    ...prev,
+    status: mode === "paid" ? "paid" : "confirmed",
+    paymentStatus: mode,
+    paidAt: new Date().toISOString(),
+    disputeReason: undefined,
+    disputedAt: undefined,
+  };
+  writeGigs(gigs);
+  return gigs[idx];
+}
+
+/** Either party opens a dispute on a booking */
+export function openBookingDispute(
+  gigId: string,
+  reason: string
+): Booking | null {
+  const gigs = getDemoGigs();
+  const idx = gigs.findIndex((g) => g.id === gigId);
+  if (idx < 0) return null;
+  const prev = gigs[idx];
+  gigs[idx] = {
+    ...prev,
+    paymentStatus: "disputed",
+    disputeReason: reason.trim() || "Issue reported",
+    disputedAt: new Date().toISOString(),
+  };
+  writeGigs(gigs);
   return gigs[idx];
 }

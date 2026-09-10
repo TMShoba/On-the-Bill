@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import NavBar from "../components/NavBar";
+import ActivityFeed from "../components/ActivityFeed";
 import { artistImage } from "../utils/imageCdn";
 
 const roster = [
@@ -78,6 +79,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <ActivityFeed />
 
       {/* ROSTER STRIP */}
       <section className="border-y border-white/10 bg-slate-900/50 py-10">
