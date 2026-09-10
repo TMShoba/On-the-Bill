@@ -9,6 +9,7 @@ export default function Artists() {
   const [location, setLocation] = useState("");
   const [minRate, setMinRate] = useState("");
   const [maxRate, setMaxRate] = useState("");
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   // Text search hits the API; genre / location / rate filtered client-side so
   // dropdown options stay complete.
@@ -54,19 +55,20 @@ export default function Artists() {
   }, [artists]);
 
   function clearFilters() {
-    setQ("");
     setGenre("");
     setLocation("");
     setMinRate("");
     setMaxRate("");
   }
 
-  const hasActiveFilters =
-    Boolean(q.trim()) ||
-    Boolean(genre.trim()) ||
-    Boolean(location.trim()) ||
-    Boolean(minRate) ||
-    Boolean(maxRate);
+  const activeFilterCount = [
+    Boolean(genre.trim()),
+    Boolean(location.trim()),
+    Boolean(minRate),
+    Boolean(maxRate),
+  ].filter(Boolean).length;
+
+  const hasActiveFilters = Boolean(q.trim()) || activeFilterCount > 0;
 
   return (
     <div className="min-h-dvh bg-slate-50 pb-mobile-nav">
@@ -83,84 +85,126 @@ export default function Artists() {
         </div>
 
         <div className="mb-6 sticky top-14 z-30 -mx-3 rounded-none border-y border-slate-200/80 bg-white/95 p-3 shadow-sm backdrop-blur-lg sm:static sm:mx-0 sm:rounded-2xl sm:border sm:p-5">
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            <div className="lg:col-span-2">
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Search
-              </label>
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <svg
+                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 10.5a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z" />
+              </svg>
               <input
                 type="search"
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="Name, genre, or city…"
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none ring-emerald-500/30 placeholder:text-slate-400 focus:border-emerald-500 focus:bg-white focus:ring-2"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-sm text-slate-900 outline-none ring-emerald-500/30 placeholder:text-slate-400 focus:border-emerald-500 focus:bg-white focus:ring-2"
               />
             </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Genre
-              </label>
-              <select
-                value={genre}
-                onChange={(e) => setGenre(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/30"
-              >
-                <option value="">All genres</option>
-                {genreOptions.map((g) => (
-                  <option key={g} value={g}>
-                    {g}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Location
-              </label>
-              <select
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/30"
-              >
-                <option value="">All locations</option>
-                {locationOptions.map((loc) => (
-                  <option key={loc} value={loc}>
-                    {loc}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Min rate
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  step={1000}
-                  value={minRate}
-                  onChange={(e) => setMinRate(e.target.value)}
-                  placeholder="R0"
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/30"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Max rate
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  step={1000}
-                  value={maxRate}
-                  onChange={(e) => setMaxRate(e.target.value)}
-                  placeholder="Any"
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/30"
-                />
-              </div>
-            </div>
+
+            <button
+              type="button"
+              onClick={() => setFiltersOpen((v) => !v)}
+              aria-expanded={filtersOpen}
+              className={`relative flex shrink-0 items-center gap-1.5 rounded-xl border px-3.5 py-2.5 text-sm font-semibold transition sm:px-4 ${
+                filtersOpen || activeFilterCount > 0
+                  ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+                  : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+              }`}
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h18M6 9h12M9 14h6M11 19h2" />
+              </svg>
+              <span className="hidden sm:inline">Filters</span>
+              {activeFilterCount > 0 && (
+                <span className="flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-emerald-600 px-1 text-[10px] font-bold text-white">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
           </div>
+
+          {filtersOpen && (
+            <div className="mt-3 border-t border-slate-100 pt-3">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <div>
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Genre
+                  </label>
+                  <select
+                    value={genre}
+                    onChange={(e) => setGenre(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/30"
+                  >
+                    <option value="">All genres</option>
+                    {genreOptions.map((g) => (
+                      <option key={g} value={g}>
+                        {g}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Location
+                  </label>
+                  <select
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/30"
+                  >
+                    <option value="">All locations</option>
+                    {locationOptions.map((loc) => (
+                      <option key={loc} value={loc}>
+                        {loc}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Min rate
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    step={1000}
+                    value={minRate}
+                    onChange={(e) => setMinRate(e.target.value)}
+                    placeholder="R0"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Max rate
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    step={1000}
+                    value={maxRate}
+                    onChange={(e) => setMaxRate(e.target.value)}
+                    placeholder="Any"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/30"
+                  />
+                </div>
+              </div>
+              {activeFilterCount > 0 && (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="mt-3 text-sm font-semibold text-emerald-700 hover:text-emerald-800"
+                >
+                  Clear filters
+                </button>
+              )}
+            </div>
+          )}
+
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
             <p className="text-sm text-slate-500">
               {isLoading
@@ -168,15 +212,6 @@ export default function Artists() {
                 : `${filtered.length} artist${filtered.length === 1 ? "" : "s"}`}
               {hasActiveFilters ? " matching filters" : ""}
             </p>
-            {hasActiveFilters && (
-              <button
-                type="button"
-                onClick={clearFilters}
-                className="text-sm font-semibold text-emerald-700 hover:text-emerald-800"
-              >
-                Clear filters
-              </button>
-            )}
           </div>
         </div>
 

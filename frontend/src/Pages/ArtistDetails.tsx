@@ -144,7 +144,7 @@ export default function ArtistDetails() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-dvh bg-white pb-mobile-nav">
         <NavBar />
         <div className="mx-auto max-w-6xl px-4 py-20">
           <div className="h-80 animate-pulse rounded-2xl bg-slate-200" />
@@ -155,7 +155,7 @@ export default function ArtistDetails() {
 
   if (isError || !artist) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-dvh bg-white pb-mobile-nav">
         <NavBar />
         <div className="mx-auto max-w-6xl px-4 py-24 text-center">
           <h1 className="text-3xl font-bold text-slate-900">Artist not found</h1>
@@ -168,7 +168,7 @@ export default function ArtistDetails() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-dvh bg-white pb-mobile-nav">
       <NavBar />
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
         <div className="mb-8 flex flex-wrap items-center justify-between gap-3">

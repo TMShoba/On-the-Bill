@@ -12,7 +12,7 @@ import {
   DEMO_PROMOTER,
   ensureDemoGigs,
 } from "../Services/demoStore";
-import { saveAuth, clearAuth, getStoredUser } from "../Services/authService";
+import { saveAuth, clearAuth, getStoredUser, updateStoredUser } from "../Services/authService";
 
 type AuthContextValue = {
   user: User | null;
@@ -25,6 +25,7 @@ type AuthContextValue = {
     password: string;
     role: UserRole;
   }) => Promise<void>;
+  updateUser: (patch: Partial<User>) => void;
   logout: () => void;
 };
 
@@ -108,6 +109,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
+  const updateUser = useCallback((patch: Partial<User>) => {
+    const next = updateStoredUser(patch);
+    if (next) setUser(next as User);
+  }, []);
+
   const value = useMemo(
     () => ({
       user,
@@ -115,9 +121,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loginDemo,
       loginWithCredentials,
       register,
+      updateUser,
       logout,
     }),
-    [user, loginDemo, loginWithCredentials, register, logout]
+    [user, loginDemo, loginWithCredentials, register, updateUser, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

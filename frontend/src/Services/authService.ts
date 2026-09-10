@@ -38,3 +38,11 @@ export function getStoredUser(): AuthResponse["user"] | null {
     return null;
   }
 }
+
+export function updateStoredUser(patch: Partial<AuthResponse["user"]>) {
+  const current = getStoredUser();
+  if (!current) return null;
+  const next = { ...current, ...patch };
+  localStorage.setItem("user", JSON.stringify(next));
+  return next;
+}

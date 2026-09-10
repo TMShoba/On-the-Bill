@@ -1,11 +1,11 @@
 import { useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import GigCalendar from "../../components/GigCalendar";
 import GigDetailsModal from "../../components/GigDetailsModal";
 import RemindersPanel from "../../components/RemindersPanel";
 import MessagesPanel from "../../components/Messages/MessagesPanel";
 import ArtistPhotoUpload from "../../components/ArtistPhotoUpload";
 import ProfileStrengthMeter from "../../components/ProfileStrengthMeter";
-import BankingDetailsForm from "../../components/BankingDetailsForm";
 import EarningsStats from "../../components/EarningsStats";
 import TrustEducation from "../../components/TrustEducation";
 import {
@@ -17,11 +17,20 @@ import {
 } from "../../Services/demoStore";
 import type { Booking } from "../../Types/Artist";
 import { useAuth } from "../../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+
+type TabKey = "overview" | "calendar" | "profile" | "messages";
+
+const TABS: { key: TabKey; label: string }[] = [
+  { key: "overview", label: "Overview" },
+  { key: "calendar", label: "Calendar" },
+  { key: "profile", label: "Profile" },
+  { key: "messages", label: "Messages" },
+];
 
 export default function ArtistDashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [tab, setTab] = useState<TabKey>("overview");
   const [gigs, setGigs] = useState<Booking[]>(() => getDemoGigs());
   const [selected, setSelected] = useState<Booking | null>(null);
   const [dayGigs, setDayGigs] = useState<Booking[]>([]);
@@ -52,6 +61,11 @@ export default function ArtistDashboard() {
     setGigs(getDemoGigs());
   }
 
+  function openGig(g: Booking) {
+    setSelected(g);
+    setModalOpen(true);
+  }
+
   function handleRespond(gigId: string, status: "confirmed" | "declined") {
     setResponding(true);
     const updated = updateBookingStatus(gigId, status);
@@ -64,7 +78,7 @@ export default function ArtistDashboard() {
 
   return (
     <div className="mx-auto max-w-6xl px-3 py-5 sm:px-6 sm:py-8">
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-3 sm:mb-8">
+      <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs font-bold uppercase tracking-widest text-emerald-600">
             Artist
@@ -76,131 +90,144 @@ export default function ArtistDashboard() {
             Availability, requests, earnings & messages
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => {
-            logout();
-            navigate("/");
-          }}
-          className="hidden rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 sm:inline-flex"
-        >
-          Log out
-        </button>
-      </div>
-
-      <div className="mb-6 grid gap-4 sm:grid-cols-3">
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-sm text-slate-500">Confirmed</p>
-          <p className="text-2xl font-bold text-emerald-600">{stats.confirmed}</p>
-        </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-sm text-slate-500">Pending requests</p>
-          <p className="text-2xl font-bold text-amber-600">{stats.pending}</p>
-        </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-sm text-slate-500">Declined</p>
-          <p className="text-2xl font-bold text-rose-500">{stats.declined}</p>
+        <div className="flex items-center gap-2">
+          <Link
+            to="/dashboard/settings"
+            className="hidden rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 sm:inline-flex"
+          >
+            Settings
+          </Link>
+          <button
+            type="button"
+            onClick={() => {
+              logout();
+              navigate("/");
+            }}
+            className="hidden rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 sm:inline-flex"
+          >
+            Log out
+          </button>
         </div>
       </div>
 
-      {/* Earnings & retention stats */}
-      <EarningsStats gigs={mine} />
+      {/* Tabs */}
+      <div className="sticky top-14 z-20 -mx-3 mb-6 overflow-x-auto border-y border-slate-200/80 bg-slate-50/95 px-3 py-2 backdrop-blur scrollbar-none sm:static sm:mx-0 sm:border-none sm:bg-transparent sm:px-0 sm:py-0">
+        <div className="flex w-max gap-1.5 sm:w-full sm:gap-2">
+          {TABS.map((t) => (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => setTab(t.key)}
+              className={`shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition ${
+                tab === t.key
+                  ? "bg-slate-900 text-white shadow-sm"
+                  : "bg-white text-slate-600 hover:bg-slate-100"
+              } ${t.key === "overview" && pendingRequests.length > 0 ? "relative" : ""}`}
+            >
+              {t.label}
+              {t.key === "overview" && pendingRequests.length > 0 && (
+                <span className="ml-1.5 inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-bold text-white">
+                  {pendingRequests.length}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
 
-      <div className="mb-8 grid gap-6 lg:grid-cols-2">
-        <ProfileStrengthMeter
-          artistId={artistId}
-          hasPublicBio
-          refreshKey={profileTick}
-        />
+      {tab === "overview" && (
         <div className="space-y-6">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="mb-3 text-lg font-bold text-slate-900">Profile photo</h2>
-            <ArtistPhotoUpload
-              artistId={artistId}
-              onPhotoChange={() => setProfileTick((n) => n + 1)}
-            />
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <p className="text-sm text-slate-500">Confirmed</p>
+              <p className="text-2xl font-bold text-emerald-600">{stats.confirmed}</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <p className="text-sm text-slate-500">Pending requests</p>
+              <p className="text-2xl font-bold text-amber-600">{stats.pending}</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <p className="text-sm text-slate-500">Declined</p>
+              <p className="text-2xl font-bold text-rose-500">{stats.declined}</p>
+            </div>
           </div>
-          <BankingDetailsForm
-            artistId={artistId}
-            onSaved={() => setProfileTick((n) => n + 1)}
-          />
-        </div>
-      </div>
 
-      {/* Pending booking requests — accept / decline journey */}
-      {pendingRequests.length > 0 && (
-        <div className="mb-8 rounded-2xl border border-amber-200 bg-amber-50/60 p-5 shadow-sm">
-          <h2 className="text-lg font-bold text-slate-900">
-            Booking requests awaiting your response
-          </h2>
-          <p className="mt-1 text-sm text-slate-600">
-            Promoters have requested these dates. Accept to confirm or decline if
-            you are unavailable.
-          </p>
-          <ul className="mt-4 space-y-3">
-            {pendingRequests.map((g) => (
-              <li
-                key={g.id}
-                className="flex flex-col gap-3 rounded-xl border border-amber-100 bg-white p-4 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div>
-                  <p className="font-semibold text-slate-900">
-                    {g.venue || "Event"} · {g.eventDate}
-                    {g.time ? ` · ${g.time}` : ""}
-                  </p>
-                  <p className="text-sm text-slate-500">
-                    {g.promoterName || g.clientName}
-                    {g.city ? ` · ${g.city}` : ""}
-                    {typeof g.fee === "number"
-                      ? ` · R${g.fee.toLocaleString()}`
-                      : ""}
-                  </p>
-                  {g.message && (
-                    <p className="mt-1 line-clamp-2 text-sm text-slate-600">
-                      {g.message}
-                    </p>
-                  )}
-                </div>
-                <div className="flex shrink-0 flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelected(g);
-                      setModalOpen(true);
-                    }}
-                    className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          <EarningsStats gigs={mine} />
+
+          {pendingRequests.length > 0 && (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-5 shadow-sm">
+              <h2 className="text-lg font-bold text-slate-900">
+                Booking requests awaiting your response
+              </h2>
+              <p className="mt-1 text-sm text-slate-600">
+                Promoters have requested these dates. Accept to confirm or decline if
+                you are unavailable.
+              </p>
+              <ul className="mt-4 space-y-3">
+                {pendingRequests.map((g) => (
+                  <li
+                    key={g.id}
+                    className="flex flex-col gap-3 rounded-xl border border-amber-100 bg-white p-4 sm:flex-row sm:items-center sm:justify-between"
                   >
-                    Details
-                  </button>
-                  <button
-                    type="button"
-                    disabled={responding}
-                    onClick={() => handleRespond(g.id, "declined")}
-                    className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-sm font-semibold text-rose-700 hover:bg-rose-100 disabled:opacity-60"
-                  >
-                    Decline
-                  </button>
-                  <button
-                    type="button"
-                    disabled={responding}
-                    onClick={() => handleRespond(g.id, "confirmed")}
-                    className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
-                  >
-                    Accept
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-slate-900">
+                        {g.venue || "Event"} · {g.eventDate}
+                        {g.time ? ` · ${g.time}` : ""}
+                      </p>
+                      <p className="text-sm text-slate-500">
+                        {g.promoterName || g.clientName}
+                        {g.city ? ` · ${g.city}` : ""}
+                        {typeof g.fee === "number"
+                          ? ` · R${g.fee.toLocaleString()}`
+                          : ""}
+                      </p>
+                      {g.message && (
+                        <p className="mt-1 line-clamp-2 text-sm text-slate-600">
+                          {g.message}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex shrink-0 flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => openGig(g)}
+                        className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                      >
+                        Details
+                      </button>
+                      <button
+                        type="button"
+                        disabled={responding}
+                        onClick={() => handleRespond(g.id, "declined")}
+                        className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-sm font-semibold text-rose-700 hover:bg-rose-100 disabled:opacity-60"
+                      >
+                        Decline
+                      </button>
+                      <button
+                        type="button"
+                        disabled={responding}
+                        onClick={() => handleRespond(g.id, "confirmed")}
+                        className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+                      >
+                        Accept
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <RemindersPanel gigs={mine} onOpenGig={openGig} />
+
+          <TrustEducation compact />
         </div>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+      {tab === "calendar" && (
+        <div>
           <div className="mb-3">
-            <h2 className="text-lg font-bold text-slate-900">
-              Availability calendar
-            </h2>
+            <h2 className="text-lg font-bold text-slate-900">Availability calendar</h2>
             <p className="text-sm text-slate-500">
               Confirmed, pending and declined gigs on your schedule. Tap a day to
               review or respond.
@@ -211,39 +238,28 @@ export default function ArtistDashboard() {
             onSelectDay={(_date, list) => {
               setDayGigs(list);
               if (list.length === 1) {
-                setSelected(list[0]);
-                setModalOpen(true);
+                openGig(list[0]);
               } else if (list.length > 1) {
                 setSelected(null);
                 setModalOpen(false);
               }
             }}
-            onSelectGig={(g) => {
-              setSelected(g);
-              setModalOpen(true);
-            }}
+            onSelectGig={openGig}
           />
 
           {dayGigs.length > 1 && (
             <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
-              <h3 className="mb-2 text-sm font-bold text-slate-900">
-                Gigs on this day
-              </h3>
+              <h3 className="mb-2 text-sm font-bold text-slate-900">Gigs on this day</h3>
               <ul className="space-y-2">
                 {dayGigs.map((g) => (
                   <li key={g.id}>
                     <button
                       type="button"
-                      onClick={() => {
-                        setSelected(g);
-                        setModalOpen(true);
-                      }}
+                      onClick={() => openGig(g)}
                       className="flex w-full items-center justify-between rounded-lg border border-slate-100 px-3 py-2 text-left text-sm hover:bg-slate-50"
                     >
                       <span className="font-medium">{g.venue}</span>
-                      <span className="capitalize text-slate-500">
-                        {g.status}
-                      </span>
+                      <span className="capitalize text-slate-500">{g.status}</span>
                     </button>
                   </li>
                 ))}
@@ -251,25 +267,29 @@ export default function ArtistDashboard() {
             </div>
           )}
         </div>
+      )}
 
-        <div className="space-y-6">
-          <RemindersPanel
-            gigs={mine}
-            onOpenGig={(g) => {
-              setSelected(g);
-              setModalOpen(true);
-            }}
-          />
+      {tab === "profile" && (
+        <div className="grid gap-6 lg:grid-cols-2">
+          <ProfileStrengthMeter artistId={artistId} hasPublicBio refreshKey={profileTick} />
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 className="mb-3 text-lg font-bold text-slate-900">Profile photo</h2>
+            <ArtistPhotoUpload
+              artistId={artistId}
+              onPhotoChange={() => setProfileTick((n) => n + 1)}
+            />
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm text-slate-600 lg:col-span-2">
+            Payout details have moved to{" "}
+            <Link to="/dashboard/settings" className="font-semibold text-emerald-700 hover:underline">
+              Settings
+            </Link>
+            .
+          </div>
         </div>
-      </div>
+      )}
 
-      <div className="mt-8">
-        <MessagesPanel />
-      </div>
-
-      <div className="mt-8">
-        <TrustEducation compact />
-      </div>
+      {tab === "messages" && <MessagesPanel />}
 
       <GigDetailsModal
         open={modalOpen}

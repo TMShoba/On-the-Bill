@@ -46,9 +46,8 @@ function StatusTimeline({ status }: { status: string }) {
     );
   }
   const order = ["pending", "confirmed", "paid"];
-  const idx = Math.max(0, order.indexOf(status === "confirmed" ? "confirmed" : status));
-  // confirmed with unpaid still sits on confirmed step
-  const active =
+  const active = Math.max(0, order.indexOf(status));
+  
     status === "paid" ? 2 : status === "confirmed" ? 1 : 0;
 
   return (
