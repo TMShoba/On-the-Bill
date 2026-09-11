@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import GigCalendar from "../../components/GigCalendar";
 import GigDetailsModal from "../../components/GigDetailsModal";
 import RemindersPanel from "../../components/RemindersPanel";
@@ -30,7 +30,13 @@ const TABS: { key: TabKey; label: string }[] = [
 export default function ArtistDashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<TabKey>("overview");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = (searchParams.get("tab") as TabKey) || "overview";
+  const [tab, setTab] = useState<TabKey>(
+    ["overview", "calendar", "profile", "messages"].includes(initialTab)
+      ? initialTab
+      : "overview"
+  );
   const [gigs, setGigs] = useState<Booking[]>(() => getDemoGigs());
   const [selected, setSelected] = useState<Booking | null>(null);
   const [dayGigs, setDayGigs] = useState<Booking[]>([]);
@@ -117,7 +123,14 @@ export default function ArtistDashboard() {
             <button
               key={t.key}
               type="button"
-              onClick={() => setTab(t.key)}
+              onClick={() => {
+                setTab(t.key);
+                if (t.key === "messages") {
+                  setSearchParams({ tab: "messages" });
+                } else if (searchParams.get("tab")) {
+                  setSearchParams({});
+                }
+              }}
               className={`shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition ${
                 tab === t.key
                   ? "bg-slate-900 text-white shadow-sm"

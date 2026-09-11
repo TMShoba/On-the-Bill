@@ -48,7 +48,7 @@ export default function NavBar() {
               <NavLink to="/dashboard" className={linkClass}>
                 Dashboard
               </NavLink>
-              <NavLink to="/dashboard" className={linkClass}>
+              <NavLink to="/dashboard?tab=messages" className={linkClass}>
                 <span className="relative">
                   Messages
                   {unread > 0 && (

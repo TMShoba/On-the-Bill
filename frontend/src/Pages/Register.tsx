@@ -1,6 +1,7 @@
 import {type FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import NavBar from "../components/NavBar";
+import Footer from "../components/Footer";
 import { register, saveAuth } from "../Services/authService";
 
 export default function Register() {
@@ -165,6 +166,7 @@ export default function Register() {
           </p>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

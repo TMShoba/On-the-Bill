@@ -83,7 +83,17 @@ export default function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 z-50 mt-2 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl sm:w-96">
+        <>
+          {/* Mobile backdrop */}
+          <div
+            className="fixed inset-0 z-40 bg-slate-900/30 sm:hidden"
+            onClick={() => setOpen(false)}
+            aria-hidden
+          />
+          <div
+            className="fixed inset-x-3 top-[4.25rem] z-50 max-h-[min(70vh,28rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-96 sm:max-h-none sm:max-w-none"
+            style={{ maxWidth: "calc(100vw - 1.5rem)" }}
+          >
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
             <h3 className="text-sm font-bold text-slate-900">Notifications</h3>
             {unread > 0 && (
@@ -140,6 +150,7 @@ export default function NotificationBell() {
             )}
           </ul>
         </div>
+        </>
       )}
     </div>
   );

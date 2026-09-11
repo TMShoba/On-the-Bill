@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import ArtistCard from "../components/ArtistCard";
 import NavBar from "../components/NavBar";
+import Footer from "../components/Footer";
 import { useArtists } from "../hooks/useArtists";
 
 export default function Artists() {
@@ -251,6 +252,7 @@ export default function Artists() {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   );
 }

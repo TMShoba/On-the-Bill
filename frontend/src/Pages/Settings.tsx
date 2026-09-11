@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import NavBar from "../components/NavBar";
+import Footer from "../components/Footer";
 import ToggleSwitch from "../components/ToggleSwitch";
 import BankingDetailsForm from "../components/BankingDetailsForm";
 import { useAuth } from "../context/AuthContext";
@@ -204,6 +205,7 @@ export default function Settings() {
           </p>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

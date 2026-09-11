@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import NavBar from "../components/NavBar";
 import ActivityFeed from "../components/ActivityFeed";
+import Footer from "../components/Footer";
 import { artistImage } from "../utils/imageCdn";
 
 const roster = [
@@ -20,6 +21,9 @@ export default function Home() {
   return (
     <div className="min-h-dvh bg-slate-950 text-white pb-mobile-nav">
       <NavBar />
+
+      {/* Live activity strip — directly under navbar */}
+      <ActivityFeed />
 
       {/* HERO — dark, high-impact */}
       <section className="relative overflow-hidden">
@@ -80,7 +84,6 @@ export default function Home() {
         </div>
       </section>
 
-      <ActivityFeed />
 
       {/* ROSTER STRIP */}
       <section className="border-y border-white/10 bg-slate-900/50 py-10">
@@ -218,9 +221,7 @@ export default function Home() {
         </Link>
       </section>
 
-      <footer className="border-t border-white/10 py-8 text-center text-sm text-slate-500">
-        © {new Date().getFullYear()} The LineUp · South Africa
-      </footer>
+      <Footer />
     </div>
   );
 }

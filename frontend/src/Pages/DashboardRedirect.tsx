@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import ArtistDashboard from "./dashboards/ArtistDashboard";
 import PromoterDashboard from "./dashboards/PromoterDashboard";
 import NavBar from "../components/NavBar";
+import Footer from "../components/Footer";
 
 export default function DashboardRedirect() {
   const { user, isAuthenticated } = useAuth();
@@ -17,6 +18,7 @@ export default function DashboardRedirect() {
       <div className="animate-fade-up">
         {user?.role === "artist" ? <ArtistDashboard /> : <PromoterDashboard />}
       </div>
+      <Footer />
     </div>
   );
 }

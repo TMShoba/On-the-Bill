@@ -1,5 +1,5 @@
-import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import MessagesPanel from "../../components/Messages/MessagesPanel";
 import {
   getDemoGigs,
@@ -20,6 +20,14 @@ import { resolveArtistImage } from "../../utils/imageCdn";
 export default function PromoterDashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get("tab") === "messages") {
+      const el = document.getElementById("dashboard-messages");
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [searchParams]);
   const [selected, setSelected] = useState<Booking | null>(null);
   const [tick, setTick] = useState(0);
   const [favorites, setFavorites] = useState<SavedArtist[]>([]);
@@ -198,7 +206,9 @@ export default function PromoterDashboard() {
         <TrustEducation compact />
       </div>
 
-      <MessagesPanel />
+      <div id="dashboard-messages" className="scroll-mt-24">
+        <MessagesPanel />
+      </div>
 
       <GigDetailsModal
         open={Boolean(selected)}
