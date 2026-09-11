@@ -132,7 +132,7 @@ export function notifyNewMessage(input: {
     type: "message",
     title: `Message from ${input.senderName}`,
     body: input.preview.slice(0, 120),
-    href: "/dashboard?tab=messages",
+    href: "/messages",
     email: true,
   });
 }

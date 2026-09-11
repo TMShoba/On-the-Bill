@@ -159,9 +159,9 @@ export default function ArtistDetails() {
 
   if (isLoading) {
     return (
-      <div className="min-h-dvh bg-white pb-mobile-nav">
+      <div className="min-h-dvh flex flex-col bg-white pb-mobile-nav">
         <NavBar />
-        <div className="mx-auto max-w-6xl px-4 py-20">
+        <div className="flex-1 w-full mx-auto max-w-6xl px-4 py-20">
           <div className="h-80 animate-pulse rounded-2xl bg-slate-200" />
         </div>
       </div>

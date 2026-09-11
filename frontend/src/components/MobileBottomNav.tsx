@@ -112,7 +112,7 @@ export default function MobileBottomNav() {
           count: notifUnread,
         })}
         {item({
-          to: "/dashboard",
+          to: "/messages",
           label: "Messages",
           icon: <MsgIcon />,
           count: msgUnread,

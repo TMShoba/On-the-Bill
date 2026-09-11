@@ -36,10 +36,10 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-dvh bg-gradient-to-b from-slate-50 to-emerald-50/40 pb-mobile-nav">
+    <div className="min-h-dvh flex flex-col bg-gradient-to-b from-slate-50 to-emerald-50/40 pb-mobile-nav">
       <NavBar />
 
-      <div className="mx-auto flex max-w-md flex-col px-4 py-14 sm:py-20">
+      <div className="flex-1 w-full mx-auto flex max-w-md flex-col px-4 py-14 sm:py-20">
         <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm sm:p-10">
           <div className="mb-8 text-center">
             <h1 className="text-2xl font-extrabold text-slate-900">

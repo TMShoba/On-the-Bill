@@ -7,11 +7,13 @@ import DashboardRedirect from "./Pages/DashboardRedirect";
 import Artists from "./Pages/Artists";
 import Settings from "./Pages/Settings";
 import Support from "./Pages/Support";
+import Messages from "./Pages/Messages";
 import Terms from "./Pages/legal/Terms";
 import Privacy from "./Pages/legal/Privacy";
 import Cancellation from "./Pages/legal/Cancellation";
 import { AuthProvider } from "./context/AuthContext";
 import MobileBottomNav from "./components/MobileBottomNav";
+import FloatingMessagesButton from "./components/FloatingMessagesButton";
 
 function App() {
   return (
@@ -26,12 +28,14 @@ function App() {
           <Route path="/dashboard" element={<DashboardRedirect />} />
           <Route path="/dashboard/settings" element={<Settings />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/messages" element={<Messages />} />
           <Route path="/support" element={<Support />} />
           <Route path="/legal/terms" element={<Terms />} />
           <Route path="/legal/privacy" element={<Privacy />} />
           <Route path="/legal/cancellation" element={<Cancellation />} />
         </Routes>
         <MobileBottomNav />
+        <FloatingMessagesButton />
       </BrowserRouter>
     </AuthProvider>
   );

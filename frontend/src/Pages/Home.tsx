@@ -19,12 +19,13 @@ const roster = [
 
 export default function Home() {
   return (
-    <div className="min-h-dvh bg-slate-950 text-white pb-mobile-nav">
+    <div className="min-h-dvh flex flex-col bg-slate-950 text-white pb-mobile-nav">
       <NavBar />
 
       {/* Live activity strip — directly under navbar */}
       <ActivityFeed />
 
+      <div className="flex-1">
       {/* HERO — dark, high-impact */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0">
@@ -221,6 +222,7 @@ export default function Home() {
         </Link>
       </section>
 
+      </div>
       <Footer />
     </div>
   );

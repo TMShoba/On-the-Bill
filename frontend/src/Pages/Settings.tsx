@@ -46,10 +46,10 @@ export default function Settings() {
   }
 
   return (
-    <div className="min-h-dvh bg-slate-50 pb-mobile-nav">
+    <div className="min-h-dvh flex flex-col bg-slate-50 pb-mobile-nav">
       <NavBar />
 
-      <div className="mx-auto max-w-3xl px-3 py-6 sm:px-6 sm:py-10">
+      <div className="flex-1 w-full mx-auto max-w-3xl px-3 py-6 sm:px-6 sm:py-10">
         <div className="mb-6 flex items-center gap-3">
           <button
             type="button"

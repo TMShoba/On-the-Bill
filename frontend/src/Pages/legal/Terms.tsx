@@ -4,9 +4,9 @@ import Footer from "../../components/Footer";
 
 export default function Terms() {
   return (
-    <div className="min-h-dvh bg-slate-50 pb-mobile-nav">
+    <div className="min-h-dvh flex flex-col bg-slate-50 pb-mobile-nav">
       <NavBar />
-      <article className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
+      <article className="flex-1 w-full mx-auto max-w-3xl px-4 py-12 sm:px-6">
         <p className="text-xs font-bold uppercase tracking-widest text-emerald-600">
           Legal
         </p>

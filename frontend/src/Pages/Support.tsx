@@ -33,9 +33,9 @@ export default function Support() {
   }
 
   return (
-    <div className="min-h-dvh bg-slate-50 pb-mobile-nav">
+    <div className="min-h-dvh flex flex-col bg-slate-50 pb-mobile-nav">
       <NavBar />
-      <div className="mx-auto max-w-lg px-4 py-12 sm:px-6">
+      <div className="flex-1 w-full mx-auto max-w-lg px-4 py-12 sm:px-6">
         <p className="text-xs font-bold uppercase tracking-widest text-emerald-600">
           Support
         </p>

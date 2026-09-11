@@ -1,56 +1,40 @@
 import { Link } from "react-router-dom";
 
+/**
+ * Compact site footer. Parent page should use:
+ *   className="min-h-dvh flex flex-col …"
+ * and wrap main content in a flex-1 region so this stays at the bottom.
+ */
 export default function Footer() {
   return (
-    <footer className="border-t border-slate-200 bg-white">
-      <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-12 sm:flex-row sm:items-start sm:justify-between sm:px-6">
-        <div>
-          <p className="flex items-center gap-2 text-sm font-extrabold tracking-tight text-slate-900">
-            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-900 text-[11px] font-bold text-white">
-              OB
-            </span>
-            The LineUp
-          </p>
-          <p className="mt-2 max-w-sm text-sm leading-relaxed text-slate-500">
-            South Africa&apos;s live-music booking platform — clear requests,
-            availability, payments, and support for promoters and artists.
-          </p>
+    <footer className="mt-auto shrink-0 border-t border-slate-200 bg-white">
+      <div className="mx-auto flex max-w-6xl flex-col items-center gap-2 px-4 py-3 sm:flex-row sm:justify-between sm:gap-4 sm:px-6 sm:py-3.5">
+        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-slate-500">
+          <span className="font-semibold text-slate-700">The LineUp</span>
+          <span className="hidden text-slate-300 sm:inline" aria-hidden>
+            ·
+          </span>
+          <nav className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+            <Link to="/artists" className="hover:text-emerald-700">
+              Artists
+            </Link>
+            <Link to="/support" className="hover:text-emerald-700">
+              Support
+            </Link>
+            <Link to="/legal/terms" className="hover:text-emerald-700">
+              Terms
+            </Link>
+            <Link to="/legal/privacy" className="hover:text-emerald-700">
+              Privacy
+            </Link>
+            <Link to="/legal/cancellation" className="hover:text-emerald-700">
+              Cancellation
+            </Link>
+          </nav>
         </div>
-        <div className="grid grid-cols-2 gap-x-10 gap-y-2 text-sm sm:flex sm:flex-wrap sm:gap-x-6">
-          <Link
-            to="/artists"
-            className="font-medium text-slate-600 hover:text-emerald-700"
-          >
-            Browse artists
-          </Link>
-          <Link
-            to="/support"
-            className="font-medium text-slate-600 hover:text-emerald-700"
-          >
-            Support
-          </Link>
-          <Link
-            to="/legal/terms"
-            className="font-medium text-slate-600 hover:text-emerald-700"
-          >
-            Terms of use
-          </Link>
-          <Link
-            to="/legal/privacy"
-            className="font-medium text-slate-600 hover:text-emerald-700"
-          >
-            Privacy
-          </Link>
-          <Link
-            to="/legal/cancellation"
-            className="font-medium text-slate-600 hover:text-emerald-700"
-          >
-            Cancellation
-          </Link>
-        </div>
-      </div>
-      <div className="border-t border-slate-100 py-4 text-center text-xs text-slate-400">
-        © {new Date().getFullYear()} The LineUp. All rights reserved.
+        <p className="text-[11px] text-slate-400">
+          © {new Date().getFullYear()} The LineUp
+        </p>
       </div>
     </footer>
   );
