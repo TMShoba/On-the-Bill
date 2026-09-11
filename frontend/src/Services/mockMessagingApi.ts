@@ -42,15 +42,16 @@ export const mockMessagingApi = {
       .filter((m) => m.conversationId === conversationId)
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 
+    const now = new Date().toISOString();
     const updated = read<Message[]>(MSG_KEY, []).map((m) =>
-      m.conversationId === conversationId && m.senderId !== userId
-        ? { ...m, read: true }
+      m.conversationId === conversationId && m.senderId !== userId && !m.read
+        ? { ...m, read: true, readAt: now }
         : m
     );
     write(MSG_KEY, updated);
 
     return msgs.map((m) =>
-      m.senderId !== userId ? { ...m, read: true } : m
+      m.senderId !== userId && !m.read ? { ...m, read: true, readAt: now } : m
     );
   },
 
@@ -60,6 +61,7 @@ export const mockMessagingApi = {
     senderName: string;
     body: string;
     attachment?: MessageAttachment;
+    critical?: boolean;
   }): Promise<Message> {
     const preview = input.attachment
       ? `📎 ${input.attachment.name}${input.body ? ` — ${input.body}` : ""}`
@@ -73,6 +75,7 @@ export const mockMessagingApi = {
       body: input.body || (input.attachment ? `Sent ${input.attachment.name}` : ""),
       createdAt: new Date().toISOString(),
       read: false,
+      critical: input.critical,
       attachment: input.attachment,
     };
     const msgs = read<Message[]>(MSG_KEY, []);
@@ -138,6 +141,7 @@ export const mockMessagingApi = {
         senderId: input.promoterId,
         senderName: input.promoterName,
         body: input.initialMessage,
+        critical: true,
       });
     }
 
@@ -147,6 +151,35 @@ export const mockMessagingApi = {
   async totalUnread(userId: string): Promise<number> {
     const convs = await this.listConversations(userId);
     return convs.reduce((sum, c) => sum + c.unreadCount, 0);
+  },
+
+  /** Find the conversation tied to a specific booking, if one exists yet. */
+  getConversationByBooking(bookingId: string): Conversation | null {
+    const all = read<Conversation[]>(CONV_KEY, []);
+    return all.find((c) => c.bookingId === bookingId) || null;
+  },
+
+  /**
+   * Post a system-generated, read-receipt-tracked message into a booking's
+   * conversation — used for booking-critical events (accepted, declined,
+   * paid, contract issued). Silently no-ops if no conversation exists yet
+   * (e.g. a booking created outside the normal request flow).
+   */
+  async postSystemMessage(input: {
+    bookingId: string;
+    senderId: string;
+    senderName: string;
+    body: string;
+  }): Promise<Message | null> {
+    const conv = this.getConversationByBooking(input.bookingId);
+    if (!conv) return null;
+    return this.sendMessage({
+      conversationId: conv.id,
+      senderId: input.senderId,
+      senderName: input.senderName,
+      body: input.body,
+      critical: true,
+    });
   },
 };
 

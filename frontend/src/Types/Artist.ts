@@ -35,6 +35,9 @@ export type Booking = {
   paidAt?: string;
   disputeReason?: string;
   disputedAt?: string;
+  /** On-the-day proof trail — set once each side checks in */
+  artistCheckedInAt?: string;
+  promoterCheckedInAt?: string;
 };
 
 export type UserRole = "artist" | "promoter" | "client";
@@ -68,6 +71,11 @@ export type Message = {
   body: string;
   createdAt: string;
   read: boolean;
+  /** Timestamp the recipient actually opened this message — powers "Seen at" */
+  readAt?: string;
+  /** System-generated booking events (request/accept/decline/paid/contract) get
+   * a read receipt shown to the sender, and render distinctly in the thread. */
+  critical?: boolean;
   attachment?: MessageAttachment;
 };
 

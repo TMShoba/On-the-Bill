@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { resolveArtistImage } from "../utils/imageCdn";
+import VerificationBadge from "./VerificationBadge";
+import { getVerification } from "../Services/verificationStore";
 import { useAuth } from "../context/AuthContext";
 import { isFavorite, toggleFavorite } from "../Services/favoritesStore";
 
@@ -69,9 +71,15 @@ export default function ArtistCard({ artist }: ArtistCardProps) {
       </div>
 
       <div className="p-5 text-left">
-        <h3 className="text-lg font-bold text-slate-900 group-hover:text-slate-700">
-          {artist.stageName}
-        </h3>
+        <div className="flex flex-wrap items-center gap-2">
+          <h3 className="text-lg font-bold text-slate-900 group-hover:text-slate-700">
+            {artist.stageName}
+          </h3>
+          <VerificationBadge
+            status={getVerification(artist.id).status}
+            hideIfUnverified
+          />
+        </div>
         <p className="mt-1 text-sm text-slate-500">{artist.location}</p>
 
         <div className="mt-4 flex items-center justify-between">

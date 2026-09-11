@@ -4,6 +4,7 @@ import NavBar from "../components/NavBar";
 import Footer from "../components/Footer";
 import ToggleSwitch from "../components/ToggleSwitch";
 import BankingDetailsForm from "../components/BankingDetailsForm";
+import ArtistVerificationPanel from "../components/ArtistVerificationPanel";
 import { useAuth } from "../context/AuthContext";
 import { getSettings, saveSettings, clearLocalDemoData } from "../Services/settingsStore";
 
@@ -153,7 +154,11 @@ export default function Settings() {
             </div>
           </section>
 
-          {/* Banking details — artists only, relocated here from the dashboard */}
+          {user.role === "artist" && (
+            <ArtistVerificationPanel userId={user.id} />
+          )}
+
+          {/* Banking details — artists only; gated on verification inside the form */}
           {user.role === "artist" && (
             <BankingDetailsForm artistId={user.id} />
           )}

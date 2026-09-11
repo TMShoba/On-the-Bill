@@ -8,11 +8,18 @@ import ArtistPhotoUpload from "../../components/ArtistPhotoUpload";
 import ProfileStrengthMeter from "../../components/ProfileStrengthMeter";
 import EarningsStats from "../../components/EarningsStats";
 import TrustEducation from "../../components/TrustEducation";
+import ArtistVerificationPanel from "../../components/ArtistVerificationPanel";
+import VerificationBadge from "../../components/VerificationBadge";
+import {
+  getVerification,
+  isIdentityVerified,
+} from "../../Services/verificationStore";
 import {
   getDemoGigs,
   toggleReminder,
   updateBookingStatus,
   openBookingDispute,
+  checkInToGig,
   DEMO_ARTIST,
 } from "../../Services/demoStore";
 import type { Booking } from "../../Types/Artist";
@@ -24,7 +31,6 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: "overview", label: "Overview" },
   { key: "calendar", label: "Calendar" },
   { key: "profile", label: "Profile" },
-  { key: "messages", label: "Messages" },
 ];
 
 export default function ArtistDashboard() {
@@ -73,6 +79,13 @@ export default function ArtistDashboard() {
   }
 
   function handleRespond(gigId: string, status: "confirmed" | "declined") {
+    if (status === "confirmed" && !isIdentityVerified(user?.id || artistId)) {
+      window.alert(
+        "Complete artist verification before accepting bookings. Open Profile or Settings to verify."
+      );
+      setTab("profile");
+      return;
+    }
     setResponding(true);
     const updated = updateBookingStatus(gigId, status);
     refresh();
@@ -95,6 +108,11 @@ export default function ArtistDashboard() {
           <p className="mt-1 text-sm text-slate-500 sm:text-base">
             Availability, requests, earnings & messages
           </p>
+          <div className="mt-2">
+            <VerificationBadge
+              status={getVerification(user?.id || artistId).status}
+            />
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <Link
@@ -283,21 +301,24 @@ export default function ArtistDashboard() {
       )}
 
       {tab === "profile" && (
-        <div className="grid gap-6 lg:grid-cols-2">
-          <ProfileStrengthMeter artistId={artistId} hasPublicBio refreshKey={profileTick} />
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="mb-3 text-lg font-bold text-slate-900">Profile photo</h2>
-            <ArtistPhotoUpload
-              artistId={artistId}
-              onPhotoChange={() => setProfileTick((n) => n + 1)}
-            />
-          </div>
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm text-slate-600 lg:col-span-2">
-            Payout details have moved to{" "}
-            <Link to="/dashboard/settings" className="font-semibold text-emerald-700 hover:underline">
-              Settings
-            </Link>
-            .
+        <div className="space-y-6">
+          <ArtistVerificationPanel userId={user?.id || artistId} />
+          <div className="grid gap-6 lg:grid-cols-2">
+            <ProfileStrengthMeter artistId={artistId} hasPublicBio refreshKey={profileTick} />
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <h2 className="mb-3 text-lg font-bold text-slate-900">Profile photo</h2>
+              <ArtistPhotoUpload
+                artistId={artistId}
+                onPhotoChange={() => setProfileTick((n) => n + 1)}
+              />
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm text-slate-600 lg:col-span-2">
+              Payout details have moved to{" "}
+              <Link to="/dashboard/settings" className="font-semibold text-emerald-700 hover:underline">
+                Settings
+              </Link>
+              .
+            </div>
           </div>
         </div>
       )}
@@ -312,6 +333,12 @@ export default function ArtistDashboard() {
         canRespond
         responding={responding}
         onRespond={handleRespond}
+        viewerRole="artist"
+        onCheckIn={(id, role) => {
+          const updated = checkInToGig(id, role);
+          refresh();
+          if (updated) setSelected(updated);
+        }}
         onDispute={(id, reason) => {
           const updated = openBookingDispute(id, reason);
           refresh();

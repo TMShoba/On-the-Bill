@@ -5,6 +5,11 @@ import {
   notifyBookingStatusChange,
   notifyNewBookingRequest,
 } from "./notificationStore";
+import { getFeeBreakdown } from "./platformFees";
+import { createReceipt, markReceiptPaid } from "./receiptStore";
+import { ensureContract } from "./contractStore";
+import { mockMessagingApi } from "./mockMessagingApi";
+import { SYSTEM_SENDER_ID, SYSTEM_SENDER_NAME } from "./systemSender";
 
 const GIGS_KEY = "otb_demo_gigs";
 
@@ -238,13 +243,35 @@ export function updateBookingStatus(
     status,
   });
 
+  if (status === "confirmed") {
+    const contract = ensureContract(gigs[idx]);
+    void mockMessagingApi.postSystemMessage({
+      bookingId: gigId,
+      senderId: SYSTEM_SENDER_ID,
+      senderName: SYSTEM_SENDER_NAME,
+      body: `Booking confirmed by ${prev.artistName}. Written terms generated (contract v. ${contract.generatedAt.slice(
+        0,
+        10
+      )}) — view them from the booking's details.`,
+    });
+  } else {
+    void mockMessagingApi.postSystemMessage({
+      bookingId: gigId,
+      senderId: SYSTEM_SENDER_ID,
+      senderName: SYSTEM_SENDER_NAME,
+      body: `Booking declined by ${prev.artistName}.`,
+    });
+  }
+
   return gigs[idx];
 }
 
-/** Promoter marks payment sent / complete */
+/** Promoter marks payment sent / complete. Records a receipt so both sides
+ * share the exact same money trail instead of relying on chat/WhatsApp. */
 export function markBookingPaid(
   gigId: string,
-  mode: "deposit" | "paid" = "paid"
+  mode: "deposit" | "paid" = "paid",
+  method: "payfast" | "eft" | "manual" = "manual"
 ): Booking | null {
   const gigs = getDemoGigs();
   const idx = gigs.findIndex((g) => g.id === gigId);
@@ -260,24 +287,86 @@ export function markBookingPaid(
     disputedAt: undefined,
   };
   writeGigs(gigs);
-  if (mode === "paid" || mode === "deposit") {
-    try {
-      if (mode === "paid") recordSuccessfulGig(prev.artistId);
-      const promoterId =
-        prev.clientEmail === DEMO_PROMOTER.email
-          ? DEMO_PROMOTER.id
-          : prev.clientEmail;
-      notifyPaymentReceived({
-        artistId: prev.artistId,
-        promoterId,
-        amount: prev.fee || 0,
-        venue: prev.venue || "your event",
-        kind: mode === "deposit" ? "deposit" : "full",
-      });
-    } catch {
-      /* ignore */
-    }
+
+  const fees = getFeeBreakdown(prev.fee || 0);
+  const receipt = createReceipt({
+    bookingId: prev.id,
+    artistId: prev.artistId,
+    artistName: prev.artistName,
+    promoterName: prev.promoterName || prev.clientName,
+    promoterEmail: prev.clientEmail,
+    amount: mode === "deposit" ? fees.depositTotal : fees.fullTotal,
+    platformFee: mode === "deposit" ? fees.depositPlatformFee : fees.fullPlatformFee,
+    artistPayout: mode === "deposit" ? fees.depositAmount : fees.artistPayout,
+    kind: mode === "deposit" ? "deposit" : "full",
+    method,
+  });
+  markReceiptPaid(receipt.id);
+
+  try {
+    if (mode === "paid") recordSuccessfulGig(prev.artistId);
+    const promoterId =
+      prev.clientEmail === DEMO_PROMOTER.email
+        ? DEMO_PROMOTER.id
+        : prev.clientEmail;
+    notifyPaymentReceived({
+      artistId: prev.artistId,
+      promoterId,
+      amount: prev.fee || 0,
+      venue: prev.venue || "your event",
+      kind: mode === "deposit" ? "deposit" : "full",
+    });
+  } catch {
+    /* ignore */
   }
+
+  void mockMessagingApi.postSystemMessage({
+    bookingId: gigId,
+    senderId: SYSTEM_SENDER_ID,
+    senderName: SYSTEM_SENDER_NAME,
+    body:
+      mode === "paid"
+        ? `Payment complete — R${fees.fullTotal.toLocaleString()} paid in full. Receipt ${receipt.id}.`
+        : `Deposit received — R${fees.depositTotal.toLocaleString()}. Receipt ${receipt.id}. Balance of R${(
+            fees.fullTotal - fees.depositTotal
+          ).toLocaleString()} due before the event.`,
+  });
+
+  return gigs[idx];
+}
+
+/** Either side checks in on the day of the gig — a lightweight, timestamped
+ * "yes, this happened" record for both parties, useful if a dispute ever
+ * comes down to "did the artist actually show up". */
+export function checkInToGig(
+  gigId: string,
+  role: "artist" | "promoter"
+): Booking | null {
+  const gigs = getDemoGigs();
+  const idx = gigs.findIndex((g) => g.id === gigId);
+  if (idx < 0) return null;
+  const prev = gigs[idx];
+  if (prev.status !== "confirmed" && prev.status !== "paid") return prev;
+
+  const now = new Date().toISOString();
+  gigs[idx] =
+    role === "artist"
+      ? { ...prev, artistCheckedInAt: prev.artistCheckedInAt || now }
+      : { ...prev, promoterCheckedInAt: prev.promoterCheckedInAt || now };
+  writeGigs(gigs);
+
+  void mockMessagingApi.postSystemMessage({
+    bookingId: gigId,
+    senderId: SYSTEM_SENDER_ID,
+    senderName: SYSTEM_SENDER_NAME,
+    body:
+      role === "artist"
+        ? `${prev.artistName} checked in on-site for ${prev.venue || "the event"}.`
+        : `${prev.promoterName || prev.clientName} confirmed the artist arrived at ${
+            prev.venue || "the event"
+          }.`,
+  });
+
   return gigs[idx];
 }
 

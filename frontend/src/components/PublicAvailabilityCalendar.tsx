@@ -131,9 +131,11 @@ export default function PublicAvailabilityCalendar({
   );
 }
 
-/** Helper: extract confirmed event dates from a list of bookings */
+/** Helper: extract confirmed *and paid* event dates — both mean the date is
+ * taken. (A gig moving from "confirmed" to "paid" should never make a date
+ * look newly available again.) */
 export function confirmedDatesFromGigs(gigs: Booking[]): string[] {
   return gigs
-    .filter((g) => g.status === "confirmed")
+    .filter((g) => g.status === "confirmed" || g.status === "paid")
     .map((g) => g.eventDate.slice(0, 10));
 }

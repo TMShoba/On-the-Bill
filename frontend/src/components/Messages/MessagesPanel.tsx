@@ -213,6 +213,18 @@ export default function MessagesPanel({ variant = "embedded" }: Props) {
             >
               {messages.map((m) => {
                 const mine = m.senderId === user.id;
+                const isSystem = m.critical && m.senderId.startsWith("system-");
+
+                if (isSystem) {
+                  return (
+                    <div key={m.id} className="flex justify-center">
+                      <div className="max-w-[90%] rounded-xl border border-sky-100 bg-sky-50 px-3.5 py-2 text-center text-xs font-medium text-sky-800">
+                        {m.body}
+                      </div>
+                    </div>
+                  );
+                }
+
                 return (
                   <div
                     key={m.id}
@@ -223,11 +235,20 @@ export default function MessagesPanel({ variant = "embedded" }: Props) {
                         mine
                           ? "bg-slate-900 text-white"
                           : "bg-slate-100 text-slate-900"
-                      }`}
+                      } ${m.critical ? "ring-1 ring-amber-300" : ""}`}
                     >
                       {!mine && (
                         <p className="mb-0.5 text-[10px] font-semibold opacity-70">
                           {m.senderName}
+                        </p>
+                      )}
+                      {m.critical && (
+                        <p
+                          className={`mb-1 text-[10px] font-bold uppercase tracking-wide ${
+                            mine ? "text-amber-300" : "text-amber-700"
+                          }`}
+                        >
+                          Booking update
                         </p>
                       )}
                       {m.body && <p className="whitespace-pre-wrap">{m.body}</p>}
@@ -242,6 +263,24 @@ export default function MessagesPanel({ variant = "embedded" }: Props) {
                           📎 {m.attachment.name} (
                           {formatSize(m.attachment.size)})
                         </a>
+                      )}
+                      {mine && m.critical && (
+                        <p
+                          className={`mt-1 text-right text-[10px] ${
+                            m.read ? "text-emerald-300" : "text-slate-400"
+                          }`}
+                        >
+                          {m.read
+                            ? `Seen${
+                                m.readAt
+                                  ? ` ${new Date(m.readAt).toLocaleTimeString("en-ZA", {
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    })}`
+                                  : ""
+                              }`
+                            : "Delivered"}
+                        </p>
                       )}
                     </div>
                   </div>

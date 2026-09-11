@@ -25,6 +25,8 @@ import {
 import { getStoredArtistPhoto } from "../components/ArtistPhotoUpload";
 import { isFavorite, toggleFavorite } from "../Services/favoritesStore";
 import CompletedBadge from "../components/CompletedBadge";
+import VerificationBadge from "../components/VerificationBadge";
+import { getVerification } from "../Services/verificationStore";
 import Footer from "../components/Footer";
 import { getArtistBadges } from "../Services/reputationStore";
 import { getFeeBreakdown } from "../Services/platformFees";
@@ -276,7 +278,14 @@ export default function ArtistDetails() {
             <h1 className="mt-4 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
               {artist.stageName}
             </h1>
-            <p className="mt-2 text-slate-500">{artist.location}</p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <p className="text-slate-500">{artist.location}</p>
+              <VerificationBadge
+                status={getVerification(artist.id).status}
+                size="md"
+                hideIfUnverified
+              />
+            </div>
 
             <div className="mt-8 rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-emerald-50/40 p-5 shadow-sm">
               <p className="text-sm font-medium text-slate-500">Starting from</p>

@@ -4,6 +4,8 @@ import {
   saveBankingDetails,
   type BankingDetails,
 } from "../Services/artistProfileStore";
+import { isIdentityVerified } from "../Services/verificationStore";
+import { Link } from "react-router-dom";
 
 type Props = {
   artistId: string;
@@ -40,6 +42,25 @@ export default function BankingDetailsForm({ artistId, onSaved }: Props) {
   }
 
   const hasSaved = Boolean(getBankingDetails(artistId));
+  const verified = isIdentityVerified(artistId);
+
+  if (!verified) {
+    return (
+      <section className="rounded-2xl border border-amber-200 bg-amber-50/50 p-5 shadow-sm sm:p-6">
+        <h2 className="text-lg font-bold text-slate-900">Banking details</h2>
+        <p className="mt-2 text-sm text-slate-600">
+          Complete <span className="font-semibold">artist verification</span> before
+          adding banking details so payouts stay tied to a real identity.
+        </p>
+        <Link
+          to="/settings"
+          className="mt-3 inline-flex text-sm font-semibold text-emerald-700 hover:underline"
+        >
+          Go to verification →
+        </Link>
+      </section>
+    );
+  }
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">

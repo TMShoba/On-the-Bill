@@ -5,11 +5,16 @@ import {
   getDemoGigs,
   markBookingPaid,
   openBookingDispute,
+  checkInToGig,
 } from "../../Services/demoStore";
 import TrustEducation from "../../components/TrustEducation";
 import { useAuth } from "../../context/AuthContext";
 import type { Booking } from "../../Types/Artist";
 import GigDetailsModal from "../../components/GigDetailsModal";
+import VerificationBadge from "../../components/VerificationBadge";
+import CompletedBadge from "../../components/CompletedBadge";
+import { getVerification } from "../../Services/verificationStore";
+import { getArtistBadges } from "../../Services/reputationStore";
 import {
   getFavorites,
   removeFavorite,
@@ -179,6 +184,12 @@ export default function PromoterDashboard() {
                   <p className="text-sm text-slate-500">
                     {g.eventDate} · {g.venue}
                   </p>
+                  <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                    <VerificationBadge status={getVerification(g.artistId).status} hideIfUnverified />
+                    {getArtistBadges(g.artistId).completedBooking && (
+                      <CompletedBadge count={getArtistBadges(g.artistId).completedCount} />
+                    )}
+                  </div>
                 </div>
                 <span
                   className={`w-fit rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize ${
@@ -217,6 +228,12 @@ export default function PromoterDashboard() {
         showReminderToggle={false}
         showArtistBanking
         canManagePayment
+        viewerRole="promoter"
+        onCheckIn={(id, role) => {
+          const updated = checkInToGig(id, role);
+          setTick((t) => t + 1);
+          if (updated) setSelected(updated);
+        }}
         onMarkPaid={(id, mode) => {
           const updated = markBookingPaid(id, mode);
           setTick((t) => t + 1);

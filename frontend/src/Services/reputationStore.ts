@@ -95,3 +95,23 @@ export function getArtistBadges(artistId: string): {
         : null,
   };
 }
+
+/** "Same promoter rebooked this artist" — a concrete, checkable trust signal
+ * rather than a vague star rating. Counts any non-declined prior booking
+ * between this exact artist/promoter pair, excluding the booking being
+ * viewed right now. */
+export function getRebookingInfo(
+  artistId: string,
+  clientEmail: string | undefined,
+  excludeBookingId?: string
+): { isRepeat: boolean; priorCount: number } {
+  if (!clientEmail) return { isRepeat: false, priorCount: 0 };
+  const priorCount = getDemoGigs().filter(
+    (g) =>
+      g.artistId === artistId &&
+      g.clientEmail === clientEmail &&
+      g.id !== excludeBookingId &&
+      g.status !== "declined"
+  ).length;
+  return { isRepeat: priorCount > 0, priorCount };
+}
