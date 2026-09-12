@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import GigCalendar from "../../components/GigCalendar";
 import GigDetailsModal from "../../components/GigDetailsModal";
@@ -16,10 +16,10 @@ import {
 } from "../../Services/verificationStore";
 import {
   getDemoGigs,
-  toggleReminder,
-  updateBookingStatus,
-  openBookingDispute,
-  checkInToGig,
+  loadBookingsForUser,
+  toggleReminderAsync,
+  updateBookingStatusAsync,
+  openBookingDisputeAsync,
   DEMO_ARTIST,
 } from "../../Services/demoStore";
 import type { Booking } from "../../Types/Artist";
@@ -43,13 +43,27 @@ export default function ArtistDashboard() {
       ? initialTab
       : "overview"
   );
-  const [gigs, setGigs] = useState<Booking[]>(() => getDemoGigs());
+  const [gigs, setGigs] = useState<Booking[]>([]);
   const [selected, setSelected] = useState<Booking | null>(null);
   const [dayGigs, setDayGigs] = useState<Booking[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [responding, setResponding] = useState(false);
   const [profileTick, setProfileTick] = useState(0);
   const artistId = user?.id || DEMO_ARTIST.id;
+
+  useEffect(() => {
+    let cancelled = false;
+    loadBookingsForUser()
+      .then((list) => {
+        if (!cancelled) setGigs(list);
+      })
+      .catch(() => {
+        if (!cancelled) setGigs(getDemoGigs());
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
 
   const mine = useMemo(
     () => gigs.filter((g) => g.artistId === user?.id || true),
@@ -69,8 +83,12 @@ export default function ArtistDashboard() {
     };
   }, [mine]);
 
-  function refresh() {
-    setGigs(getDemoGigs());
+  async function refresh() {
+    try {
+      setGigs(await loadBookingsForUser());
+    } catch {
+      setGigs(getDemoGigs());
+    }
   }
 
   function openGig(g: Booking) {
@@ -78,7 +96,7 @@ export default function ArtistDashboard() {
     setModalOpen(true);
   }
 
-  function handleRespond(gigId: string, status: "confirmed" | "declined") {
+  async function handleRespond(gigId: string, status: "confirmed" | "declined") {
     if (status === "confirmed" && !isIdentityVerified(user?.id || artistId)) {
       window.alert(
         "Complete artist verification before accepting bookings. Open Profile or Settings to verify."
@@ -87,12 +105,13 @@ export default function ArtistDashboard() {
       return;
     }
     setResponding(true);
-    const updated = updateBookingStatus(gigId, status);
-    refresh();
-    if (updated) {
-      setSelected(updated);
+    try {
+      const updated = await updateBookingStatusAsync(gigId, status);
+      await refresh();
+      if (updated) setSelected(updated);
+    } finally {
+      setResponding(false);
     }
-    setResponding(false);
   }
 
   return (
@@ -333,20 +352,14 @@ export default function ArtistDashboard() {
         canRespond
         responding={responding}
         onRespond={handleRespond}
-        viewerRole="artist"
-        onCheckIn={(id, role) => {
-          const updated = checkInToGig(id, role);
-          refresh();
+        onDispute={async (id, reason) => {
+          const updated = await openBookingDisputeAsync(id, reason);
+          await refresh();
           if (updated) setSelected(updated);
         }}
-        onDispute={(id, reason) => {
-          const updated = openBookingDispute(id, reason);
-          refresh();
-          if (updated) setSelected(updated);
-        }}
-        onToggleReminder={(id, value) => {
-          toggleReminder(id, value);
-          refresh();
+        onToggleReminder={async (id, value) => {
+          await toggleReminderAsync(id, value);
+          await refresh();
           setSelected((prev) =>
             prev && prev.id === id ? { ...prev, reminderOptIn: value } : prev
           );

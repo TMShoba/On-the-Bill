@@ -4,7 +4,7 @@ import NavBar from "../components/NavBar";
 import { useArtist } from "../hooks/useArtists";
 import { useAuth } from "../context/AuthContext";
 import {
-  addPromoterBooking,
+  addPromoterBookingAsync,
   getDemoGigs,
   DEMO_ARTIST,
   DEMO_PROMOTER,
@@ -100,7 +100,7 @@ export default function ArtistDetails() {
       let bookingId: string = crypto.randomUUID();
 
       if (user?.role === "promoter" || user?.email === DEMO_PROMOTER.email) {
-        const gig = addPromoterBooking({
+        const gig = await addPromoterBookingAsync({
           ...payload,
           artistId: DEMO_ARTIST.id,
           artistName: artist.stageName,

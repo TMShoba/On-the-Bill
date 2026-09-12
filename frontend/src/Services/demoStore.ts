@@ -2,14 +2,17 @@ import { recordSuccessfulGig } from "./reputationStore";
 import { notifyPaymentReceived } from "./notificationStore";
 import type { Booking } from "../Types/Artist";
 import {
+  createBooking as apiCreateBooking,
+  getBookings as apiGetBookings,
+  updateBookingStatusApi,
+  updateBookingPaymentApi,
+  openBookingDisputeApi,
+  updateBookingReminderApi,
+} from "./bookingService";
+import {
   notifyBookingStatusChange,
   notifyNewBookingRequest,
 } from "./notificationStore";
-import { getFeeBreakdown } from "./platformFees";
-import { createReceipt, markReceiptPaid } from "./receiptStore";
-import { ensureContract } from "./contractStore";
-import { mockMessagingApi } from "./mockMessagingApi";
-import { SYSTEM_SENDER_ID, SYSTEM_SENDER_NAME } from "./systemSender";
 
 const GIGS_KEY = "otb_demo_gigs";
 
@@ -243,35 +246,13 @@ export function updateBookingStatus(
     status,
   });
 
-  if (status === "confirmed") {
-    const contract = ensureContract(gigs[idx]);
-    void mockMessagingApi.postSystemMessage({
-      bookingId: gigId,
-      senderId: SYSTEM_SENDER_ID,
-      senderName: SYSTEM_SENDER_NAME,
-      body: `Booking confirmed by ${prev.artistName}. Written terms generated (contract v. ${contract.generatedAt.slice(
-        0,
-        10
-      )}) — view them from the booking's details.`,
-    });
-  } else {
-    void mockMessagingApi.postSystemMessage({
-      bookingId: gigId,
-      senderId: SYSTEM_SENDER_ID,
-      senderName: SYSTEM_SENDER_NAME,
-      body: `Booking declined by ${prev.artistName}.`,
-    });
-  }
-
   return gigs[idx];
 }
 
-/** Promoter marks payment sent / complete. Records a receipt so both sides
- * share the exact same money trail instead of relying on chat/WhatsApp. */
+/** Promoter marks payment sent / complete */
 export function markBookingPaid(
   gigId: string,
-  mode: "deposit" | "paid" = "paid",
-  method: "payfast" | "eft" | "manual" = "manual"
+  mode: "deposit" | "paid" = "paid"
 ): Booking | null {
   const gigs = getDemoGigs();
   const idx = gigs.findIndex((g) => g.id === gigId);
@@ -287,86 +268,24 @@ export function markBookingPaid(
     disputedAt: undefined,
   };
   writeGigs(gigs);
-
-  const fees = getFeeBreakdown(prev.fee || 0);
-  const receipt = createReceipt({
-    bookingId: prev.id,
-    artistId: prev.artistId,
-    artistName: prev.artistName,
-    promoterName: prev.promoterName || prev.clientName,
-    promoterEmail: prev.clientEmail,
-    amount: mode === "deposit" ? fees.depositTotal : fees.fullTotal,
-    platformFee: mode === "deposit" ? fees.depositPlatformFee : fees.fullPlatformFee,
-    artistPayout: mode === "deposit" ? fees.depositAmount : fees.artistPayout,
-    kind: mode === "deposit" ? "deposit" : "full",
-    method,
-  });
-  markReceiptPaid(receipt.id);
-
-  try {
-    if (mode === "paid") recordSuccessfulGig(prev.artistId);
-    const promoterId =
-      prev.clientEmail === DEMO_PROMOTER.email
-        ? DEMO_PROMOTER.id
-        : prev.clientEmail;
-    notifyPaymentReceived({
-      artistId: prev.artistId,
-      promoterId,
-      amount: prev.fee || 0,
-      venue: prev.venue || "your event",
-      kind: mode === "deposit" ? "deposit" : "full",
-    });
-  } catch {
-    /* ignore */
+  if (mode === "paid" || mode === "deposit") {
+    try {
+      if (mode === "paid") recordSuccessfulGig(prev.artistId);
+      const promoterId =
+        prev.clientEmail === DEMO_PROMOTER.email
+          ? DEMO_PROMOTER.id
+          : prev.clientEmail;
+      notifyPaymentReceived({
+        artistId: prev.artistId,
+        promoterId,
+        amount: prev.fee || 0,
+        venue: prev.venue || "your event",
+        kind: mode === "deposit" ? "deposit" : "full",
+      });
+    } catch {
+      /* ignore */
+    }
   }
-
-  void mockMessagingApi.postSystemMessage({
-    bookingId: gigId,
-    senderId: SYSTEM_SENDER_ID,
-    senderName: SYSTEM_SENDER_NAME,
-    body:
-      mode === "paid"
-        ? `Payment complete — R${fees.fullTotal.toLocaleString()} paid in full. Receipt ${receipt.id}.`
-        : `Deposit received — R${fees.depositTotal.toLocaleString()}. Receipt ${receipt.id}. Balance of R${(
-            fees.fullTotal - fees.depositTotal
-          ).toLocaleString()} due before the event.`,
-  });
-
-  return gigs[idx];
-}
-
-/** Either side checks in on the day of the gig — a lightweight, timestamped
- * "yes, this happened" record for both parties, useful if a dispute ever
- * comes down to "did the artist actually show up". */
-export function checkInToGig(
-  gigId: string,
-  role: "artist" | "promoter"
-): Booking | null {
-  const gigs = getDemoGigs();
-  const idx = gigs.findIndex((g) => g.id === gigId);
-  if (idx < 0) return null;
-  const prev = gigs[idx];
-  if (prev.status !== "confirmed" && prev.status !== "paid") return prev;
-
-  const now = new Date().toISOString();
-  gigs[idx] =
-    role === "artist"
-      ? { ...prev, artistCheckedInAt: prev.artistCheckedInAt || now }
-      : { ...prev, promoterCheckedInAt: prev.promoterCheckedInAt || now };
-  writeGigs(gigs);
-
-  void mockMessagingApi.postSystemMessage({
-    bookingId: gigId,
-    senderId: SYSTEM_SENDER_ID,
-    senderName: SYSTEM_SENDER_NAME,
-    body:
-      role === "artist"
-        ? `${prev.artistName} checked in on-site for ${prev.venue || "the event"}.`
-        : `${prev.promoterName || prev.clientName} confirmed the artist arrived at ${
-            prev.venue || "the event"
-          }.`,
-  });
-
   return gigs[idx];
 }
 
@@ -387,4 +306,116 @@ export function openBookingDispute(
   };
   writeGigs(gigs);
   return gigs[idx];
+}
+
+
+/** Prefer server bookings; fall back to local demo gigs if API is down */
+export async function loadBookingsForUser(): Promise<Booking[]> {
+  try {
+    const remote = await apiGetBookings();
+    if (Array.isArray(remote)) {
+      // Merge: server is source of truth; keep local-only fields if needed
+      writeGigs(remote);
+      return remote;
+    }
+  } catch (e) {
+    console.warn("Bookings API unavailable, using local demo store", e);
+  }
+  return getDemoGigs();
+}
+
+/** Create booking on server (with local fallback) */
+export async function addPromoterBookingAsync(input: {
+  artistId: string;
+  artistName: string;
+  eventDate: string;
+  venue: string;
+  address?: string;
+  city?: string;
+  time?: string;
+  fee?: number;
+  message?: string;
+  clientName?: string;
+  clientEmail?: string;
+}): Promise<Booking> {
+  try {
+    const created = await apiCreateBooking({
+      artistId: input.artistId,
+      clientName: input.clientName || DEMO_PROMOTER.name,
+      clientEmail: input.clientEmail || DEMO_PROMOTER.email,
+      eventDate: input.eventDate,
+      venue: input.venue,
+      message: input.message,
+      address: input.address,
+      city: input.city,
+      time: input.time,
+      fee: input.fee,
+      promoterName: input.clientName || DEMO_PROMOTER.name,
+      notes: input.message,
+    });
+    upsertDemoGig(created);
+    return created;
+  } catch (e) {
+    console.warn("createBooking API failed, local fallback", e);
+    return addPromoterBooking(input);
+  }
+}
+
+export async function updateBookingStatusAsync(
+  gigId: string,
+  status: "confirmed" | "declined"
+): Promise<Booking | null> {
+  try {
+    const updated = await updateBookingStatusApi(gigId, status);
+    upsertDemoGig(updated);
+    return updated;
+  } catch (e) {
+    console.warn("updateBookingStatus API failed, local fallback", e);
+    return updateBookingStatus(gigId, status);
+  }
+}
+
+export async function markBookingPaidAsync(
+  gigId: string,
+  mode: "deposit" | "paid" = "paid"
+): Promise<Booking | null> {
+  try {
+    const updated = await updateBookingPaymentApi(
+      gigId,
+      mode === "deposit" ? "deposit" : "paid"
+    );
+    upsertDemoGig(updated);
+    return updated;
+  } catch (e) {
+    console.warn("markBookingPaid API failed, local fallback", e);
+    return markBookingPaid(gigId, mode);
+  }
+}
+
+export async function openBookingDisputeAsync(
+  gigId: string,
+  reason: string
+): Promise<Booking | null> {
+  try {
+    const updated = await openBookingDisputeApi(gigId, reason);
+    upsertDemoGig(updated);
+    return updated;
+  } catch (e) {
+    console.warn("dispute API failed, local fallback", e);
+    return openBookingDispute(gigId, reason);
+  }
+}
+
+export async function toggleReminderAsync(
+  gigId: string,
+  value: boolean
+): Promise<Booking | null> {
+  try {
+    const updated = await updateBookingReminderApi(gigId, value);
+    upsertDemoGig(updated);
+    return updated;
+  } catch (e) {
+    console.warn("reminder API failed, local fallback", e);
+    return toggleReminder(gigId, value);
+  }
 }
