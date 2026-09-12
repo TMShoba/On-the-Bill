@@ -9,9 +9,12 @@
     "seed": "node src/seed.js"
   },
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "better-sqlite3": "^11.9.1",
     "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
     "express": "^4.21.2",
+    "nodemailer": "^10.0.8",
     "uuid": "^11.1.0"
   }
 }

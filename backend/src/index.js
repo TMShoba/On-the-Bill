@@ -1,9 +1,12 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import db from "./db.js";
 import artistsRouter from "./routes/artists.js";
 import bookingsRouter from "./routes/bookings.js";
 import authRouter from "./routes/auth.js";
+import notificationsRouter from "./routes/notifications.js";
+import messagesRouter from "./routes/messages.js";
 
 // Auto-seed database on startup
 try {
@@ -28,18 +31,20 @@ app.use(
   })
 );
 
-app.use(express.json());
+app.use(express.json({ limit: "2mb" }));
 
 // Root endpoint
 app.get("/", (_req, res) => {
   res.json({
     name: "The LineUp API",
-    version: "1.1.0",
+    version: "1.3.0",
     database: "SQLite",
     endpoints: {
       artists: "GET /api/artists",
       artist: "GET /api/artists/:id",
       bookings: "GET|POST /api/bookings",
+      messages: "GET|POST /api/messages/*",
+      email: "POST /api/notifications/email",
       register: "POST /api/auth/register",
       login: "POST /api/auth/login",
     },
@@ -59,6 +64,8 @@ app.get("/api/health", (_req, res) => {
 app.use("/api/artists", artistsRouter);
 app.use("/api/bookings", bookingsRouter);
 app.use("/api/auth", authRouter);
+app.use("/api/notifications", notificationsRouter);
+app.use("/api/messages", messagesRouter);
 
 // Error handler
 app.use((err, _req, res, _next) => {
